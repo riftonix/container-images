@@ -1,0 +1,38 @@
+{
+  "variable": {
+    "REGISTRY": {
+      "default": "ghcr.io/riftonix/container-images"
+    },
+    "HUGO_VERSION": {
+      "default": "0.147.1"
+    },
+    "AUTOPREFIXER_VERSION": {
+      "default": "10.4.21"
+    }
+  },
+  "target": {
+    "hugo-autoprefixer": {
+      "context": "docker/hugo-autoprefixer",
+      "dockerfile": "Dockerfile",
+      "args": {
+        "HUGO_VERSION": "${HUGO_VERSION}",
+        "AUTOPREFIXER_VERSION": "${AUTOPREFIXER_VERSION}"
+      },
+      "tags": [
+        "${REGISTRY}/hugo-autoprefixer:${HUGO_VERSION}-${AUTOPREFIXER_VERSION}"
+      ],
+      "labels": {
+        "org.opencontainers.image.title": "hugo-autoprefixer",
+        "org.opencontainers.image.version": "${HUGO_VERSION}-${AUTOPREFIXER_VERSION}",
+        "org.opencontainers.image.source": "https://github.com/riftonix/container-images",
+        "org.opencontainers.image.base.name": "hugomods/hugo:exts-${HUGO_VERSION}",
+        "io.riftonix.container-images.hugo.version": "${HUGO_VERSION}",
+        "io.riftonix.container-images.autoprefixer.version": "${AUTOPREFIXER_VERSION}"
+      },
+      "platforms": [
+        "linux/amd64",
+        "linux/arm64"
+      ]
+    }
+  }
+}

@@ -16,20 +16,22 @@
 
 ## 3. Hugo Autoprefixer Image
 
-- [ ] 3.1 Create `docker/hugo-autoprefixer/Dockerfile` based on `hugomods/hugo:exts-${HUGO_VERSION}`.
-- [ ] 3.2 Install `autoprefixer@${AUTOPREFIXER_VERSION}` in the image.
-- [ ] 3.3 Add OCI labels for title, version, source, base image, and component versions.
-- [ ] 3.4 Add `docker/hugo-autoprefixer/docker-bake.json` with `REGISTRY`, `HUGO_VERSION`, and `AUTOPREFIXER_VERSION` variables.
-- [ ] 3.5 Define the `hugo-autoprefixer` Bake target with tag `${REGISTRY}/hugo-autoprefixer:${HUGO_VERSION}-${AUTOPREFIXER_VERSION}`.
-- [ ] 3.6 Add a smoke check for Hugo and autoprefixer availability.
+- [x] 3.1 Create `docker/hugo-autoprefixer/Dockerfile` based on `hugomods/hugo:exts-${HUGO_VERSION}`.
+- [x] 3.2 Install `autoprefixer@${AUTOPREFIXER_VERSION}` in the image.
+- [x] 3.3 Add OCI labels for title, version, source, base image, and component versions.
+- [x] 3.4 Add `docker/hugo-autoprefixer/docker-bake.json` with `REGISTRY`, `HUGO_VERSION`, and `AUTOPREFIXER_VERSION` variables.
+- [x] 3.5 Define the `hugo-autoprefixer` Bake target with tag `${REGISTRY}/hugo-autoprefixer:${HUGO_VERSION}-${AUTOPREFIXER_VERSION}`.
 
 ## 4. GitHub Actions
 
-- [ ] 4.1 Add PR verification workflow that calls Dagger `verify-bake-target` for affected Bake targets.
-- [ ] 4.2 Add main-branch publish workflow that calls Dagger `publish-bake-target` with GHCR credentials.
-- [ ] 4.3 Add post-publish git tag creation for `docker/hugo-autoprefixer/<version>`.
-- [ ] 4.4 Make registry/repository prefix configurable via workflow environment or input while defaulting to `ghcr.io/riftonix/container-images`.
-- [ ] 4.5 Ensure workflows request only required permissions for contents, packages, and pull requests.
+- [x] 4.1 Add PR workflow with an always-run `CI Passed` aggregation job so the repository's required status check is available before merging to `master`.
+- [x] 4.2 Add Bake target discovery and verification jobs that call Dagger `verify-bake-target`, pinning the external scenario to `scenarios/container-images/v0.1.0`, and require their success from `CI Passed`.
+- [x] 4.3 Use the pinned Git module `modules/git/v1.0.0` from the PR workflow to select changed `docker/*` components for the GitHub verification matrix.
+- [ ] 4.4 Add a CI smoke check for Hugo and autoprefixer availability.
+- [ ] 4.5 Add main-branch publish workflow that calls Dagger `publish-bake-target` with GHCR credentials.
+- [ ] 4.6 Add post-publish git tag creation for `docker/hugo-autoprefixer/<version>`.
+- [ ] 4.7 Make registry/repository prefix configurable via workflow environment or input while defaulting to `ghcr.io/riftonix/container-images`.
+- [ ] 4.8 Ensure workflows request only required permissions for contents, packages, and pull requests.
 
 ## 5. Renovate
 

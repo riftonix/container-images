@@ -1,0 +1,90 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [master]
+
+permissions:
+  contents: read
+
+env:
+  DAGGER_VERSION: 0.20.8
+
+jobs:
+  prepare-targets:
+    name: Prepare targets
+    runs-on: ubuntu-latest
+
+    outputs:
+      targets: ${{ steps.targets.outputs.targets }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Set up Dagger
+        uses: dagger/dagger-for-github@v8.4.1
+        with:
+          version: ${{ env.DAGGER_VERSION }}
+
+      - name: List changed Bake targets
+        id: targets
+        run: |
+          components="$(
+            dagger -m github.com/riftonix/daggerverse/modules/git@modules/git/v1.0.0 \
+              call --source=. \
+              get-changed-components \
+              --base-ref=origin/master \
+              --head-ref=HEAD \
+              --component-roots='docker/*' \
+              --shared-paths=.github/workflows \
+              --shared-paths=renovate.json
+          )"
+          json="$(printf '%s\n' "$components" | python3 -c 'import json, pathlib, sys; print(json.dumps([{"bake_path": f"{component}/docker-bake.json", "bake_target": pathlib.PurePosixPath(component).name} for line in sys.stdin if (component := line.strip())]))')"
+          echo "targets=$json" >> "$GITHUB_OUTPUT"
+
+  verify:
+    name: Verify
+    runs-on: ubuntu-latest
+    needs: prepare-targets
+    strategy:
+      fail-fast: false
+      matrix:
+        target: ${{ fromJson(needs.prepare-targets.outputs.targets) }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Dagger
+        uses: dagger/dagger-for-github@v8.4.1
+        with:
+          version: ${{ env.DAGGER_VERSION }}
+
+      - name: Verify Bake target
+        run: |
+          dagger -m github.com/riftonix/daggerverse/scenarios/container-images@scenarios/container-images/v0.1.0 \
+            call verify-bake-target \
+            --source=. \
+            --bake-path="${{ matrix.target.bake_path }}" \
+            --bake-target="${{ matrix.target.bake_target }}"
+
+  ci-passed:
+    name: CI Passed
+    runs-on: ubuntu-latest
+    needs:
+      - prepare-targets
+      - verify
+    if: ${{ always() }}
+
+    steps:
+      - name: Check CI jobs
+        env:
+          PREPARE_TARGETS_RESULT: ${{ needs.prepare-targets.result }}
+          VERIFY_RESULT: ${{ needs.verify.result }}
+        run: |
+          test "$PREPARE_TARGETS_RESULT" = success
+          test "$VERIFY_RESULT" = success || test "$VERIFY_RESULT" = skipped
