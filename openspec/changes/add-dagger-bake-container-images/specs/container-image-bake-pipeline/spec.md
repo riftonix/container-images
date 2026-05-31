@@ -110,6 +110,11 @@ GitHub Actions workflows SHALL trigger on repository events and SHALL delegate i
 - **WHEN** a pull request changes `docker/hugo-autoprefixer/**`, workflow files, or Renovate configuration
 - **THEN** the workflow calls Dagger to verify the affected Bake target
 
+#### Scenario: Pull request required status aggregation
+
+- **WHEN** the pull request workflow completes
+- **THEN** it exposes an always-run `CI Passed` job that succeeds only when all required verification jobs succeed
+
 #### Scenario: Main branch publication
 
 - **WHEN** a push to the main branch changes the `hugo-autoprefixer` target or its context
