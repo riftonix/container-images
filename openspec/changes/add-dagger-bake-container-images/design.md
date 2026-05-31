@@ -12,6 +12,7 @@ The target model is a monorepo of base OCI images under `docker/`. GitHub Action
 - Support Docker module functions that build from Bake target names and return normal `DockerBuild` objects.
 - Support `DockerBuild.image_refs()` and `DockerBuild.tags()` accessors for Bake-derived image references.
 - Support container-images scenario functions that verify and publish Bake targets through the Docker module.
+- Support separately configured registry authentication in the container-images scenario, including multiple registries before one publish operation.
 - Publish `docker/hugo-autoprefixer` as `ghcr.io/riftonix/container-images/hugo-autoprefixer:<hugo-version>-<autoprefixer-version>`.
 - Allow the registry/repository prefix to default to `ghcr.io/riftonix/container-images` and be overridden in CI or local calls.
 - Configure Renovate automerge for Hugo and autoprefixer version updates.
@@ -50,7 +51,15 @@ The initial supported target fields are `context`, `dockerfile`, `args`, `tags`,
 
 ### Keep GitHub Actions Thin
 
-GitHub Actions will handle events, checkout, auth variables, and changed target selection. The actual verify/publish operation will be a Dagger scenario call such as `verify-bake-target --bake-path docker/hugo-autoprefixer/docker-bake.json` or `publish-bake-target --bake-path docker/hugo-autoprefixer/docker-bake.json`. The scenario functions should be thin wrappers around `dag.docker().build-from-bake(...)`.
+GitHub Actions will handle events, checkout, auth variables, and changed target selection. The actual verify/publish operation will be a Dagger scenario call such as `verify-bake-target --bake-path docker/hugo-autoprefixer/docker-bake.json` or `with-registry-auth ... publish-bake-target --bake-path docker/hugo-autoprefixer/docker-bake.json`. The scenario functions should be thin wrappers around `dag.docker().build-from-bake(...)`.
+
+### Configure Registry Authentication Separately From Publication
+
+The container-images scenario will expose a chainable `with-registry-auth(address, username, password)` function. Callers can invoke it multiple times before publication to configure credentials for every required registry. The scenario forwards the accumulated credentials to the Docker module before building and publishing.
+
+`publish-image` keeps an explicit `image-ref` input. Explicit image wrappers keep the optional `target` argument for selecting a Dockerfile stage. Bake wrappers use a required `bake-target` argument for selecting a named Bake manifest target; any Dockerfile stage for a Bake build remains configured inside `docker-bake.json`. `publish-bake-target` publishes every resolved `DockerBuild.image_refs()` value. Neither publish function accepts registry credentials directly.
+
+Registry credentials are runtime secrets supplied by CI, local environment variables, or a secret manager. They must not be stored in `docker-bake.json`. Bake `tags` describe destination image references and may target multiple registries.
 
 ### Use Bake Variables for Registry Override
 
@@ -73,3 +82,4 @@ Renovate will update these variables using custom managers or JSON-compatible ex
 - Renovate may need custom regex for JSON variables -> keep variable names stable and add focused package rules.
 - Git tag creation can race if the same version is republished -> make tag creation idempotent or fail with a clear "already released" message after confirming the image exists.
 - Updating external Dagger modules/scenarios may require a coordinated daggerverse change -> implement and test the Docker module first, then update the scenario wrapper, then consume it from this repository.
+- Publishing to multiple private registries requires separate credentials -> configure one or more chainable scenario registry auth entries before publication and keep secrets outside Bake manifests.

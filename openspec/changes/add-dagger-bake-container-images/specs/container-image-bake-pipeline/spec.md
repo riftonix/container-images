@@ -34,7 +34,7 @@ The reusable Dagger Docker module SHALL expose resolved image references and tag
 
 ### Requirement: Dagger scenario verifies Bake targets
 
-The Dagger container-images scenario SHALL provide a function that verifies an image by Bake path and target name using Dagger-native build APIs.
+The Dagger container-images scenario SHALL provide a function that verifies an image by Bake path and explicitly named Bake target using Dagger-native build APIs.
 
 #### Scenario: Verify Hugo target
 
@@ -43,12 +43,45 @@ The Dagger container-images scenario SHALL provide a function that verifies an i
 
 ### Requirement: Dagger scenario publishes Bake targets
 
-The Dagger container-images scenario SHALL provide a function that publishes an image by Bake path and target name using Dagger-native publish APIs.
+The Dagger container-images scenario SHALL provide a function that publishes all resolved image references by Bake path and target name using Dagger-native publish APIs.
 
 #### Scenario: Publish Hugo target
 
-- **WHEN** CI requests publication of the `hugo-autoprefixer` Bake target with bake path `docker/hugo-autoprefixer/docker-bake.json` and GHCR credentials
-- **THEN** the scenario builds the target through the Docker module, publishes the resolved `DockerBuild.image_refs()`, and returns the published image reference
+- **WHEN** CI configures GHCR credentials and requests publication of the `hugo-autoprefixer` Bake target with bake path `docker/hugo-autoprefixer/docker-bake.json`
+- **THEN** the scenario builds the target through the Docker module, publishes every resolved `DockerBuild.image_refs()` value, and returns the published image references
+
+### Requirement: Bake wrapper target input is explicit
+
+The Dagger container-images scenario SHALL use a required `bake-target` input for selecting a named Bake manifest target. Explicit image wrappers SHALL keep the optional `target` input for selecting a Dockerfile stage.
+
+#### Scenario: Select Bake manifest target
+
+- **WHEN** a caller invokes `verify-bake-target` or `publish-bake-target`
+- **THEN** the caller provides `bake-target` to select the named entry from `docker-bake.json`
+
+#### Scenario: Configure Dockerfile stage for Bake build
+
+- **WHEN** a Bake-driven image requires a specific Dockerfile stage
+- **THEN** the stage is configured by the target metadata inside `docker-bake.json`
+
+### Requirement: Registry authentication is configured separately from publication
+
+The Dagger container-images scenario SHALL allow callers to configure one or more registry authentications before invoking publication functions. Registry credentials SHALL remain outside `docker-bake.json`.
+
+#### Scenario: Publish explicit image with configured registry auth
+
+- **WHEN** a caller configures registry credentials and publishes an explicit image reference
+- **THEN** the scenario publishes the explicit image using the configured credentials
+
+#### Scenario: Publish Bake target to multiple authenticated registries
+
+- **WHEN** a caller configures credentials for multiple registries and publishes a Bake target whose tags reference those registries
+- **THEN** the scenario publishes every resolved image reference using the configured credentials
+
+#### Scenario: Bake manifest does not store registry credentials
+
+- **WHEN** a per-image `docker-bake.json` manifest is committed
+- **THEN** it contains destination tags and variables but does not contain registry usernames, passwords, or tokens
 
 ### Requirement: Registry prefix is overridable
 
@@ -104,3 +137,10 @@ Renovate SHALL detect and automerge supported Hugo and autoprefixer version upda
 
 - **WHEN** a newer compatible `autoprefixer` npm version is available
 - **THEN** Renovate opens and automerges a pull request updating the autoprefixer version used by the Bake target
+
+## Implementation Notes (Task 1.1)
+
+- **Docker Module:** Add `build_from_bake(self, source, bake_path, target)` method to the `Docker` class.
+- **JSON Parsing:** Use the standard `json` library to parse `docker-bake.json`.
+- **Target Resolution:** Implement basic parsing to extract `context` and `dockerfile` fields from the specified target.
+- **Testing:** Add new test cases to `daggerverse/modules/docker/tests/src/tests/main.py` (next to existing `build` tests) to verify loading Bake targets from explicit paths.

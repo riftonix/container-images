@@ -1,15 +1,18 @@
 ## 1. Docker Module Bake Support
 
-- [ ] 1.1 Add Docker module `build-from-bake` support and parser/resolver support for per-image `docker-bake.json` targets, with tests for loading Bake targets from an explicit path.
-- [ ] 1.2 Resolve Bake variables and target interpolation for supported fields: `context`, `dockerfile`, `args`, `tags`, `labels`, and `platforms`, with tests for interpolation, tag rendering, and registry override rendering.
-- [ ] 1.3 Add clear validation errors for missing bake files, missing targets, missing tags, unsupported target fields, and unsupported interpolation, with tests for validation failures.
-- [ ] 1.4 Add `DockerBuild.image_refs()` and `DockerBuild.tags()` accessors for Bake-derived image references, with tests for Bake builds and explicit builds.
-- [ ] 1.5 Ensure Bake-derived `DockerBuild.publish()` can publish the resolved image references, with tests for dry-run publication and registry auth validation.
+- [x] 1.1 Add Docker module `build-from-bake` support and parser/resolver support for per-image `docker-bake.json` targets, with tests for loading Bake targets from an explicit path.
+- [x] 1.2 Resolve Bake variables and target interpolation for supported fields: `context`, `dockerfile`, `args`, `tags`, `labels`, and `platforms`, with tests for interpolation, tag rendering, and registry override rendering.
+- [x] 1.3 Add clear validation errors for missing bake files, missing targets, missing tags, unsupported target fields, and unsupported interpolation, with tests for validation failures.
+- [x] 1.4 Add `DockerBuild.image_refs()` and `DockerBuild.tags()` accessors for Bake-derived image references, with tests for Bake builds and explicit builds.
+- [x] 1.5 Ensure Bake-derived `DockerBuild.publish()` can publish the resolved image references, with tests for dry-run publication and registry auth validation.
 
 ## 2. Container Images Scenario
 
-- [ ] 2.1 Add `verify-bake-target` scenario function that calls Docker module `build-from-bake` and builds the resolved target without publishing, with tests for verification behavior.
-- [ ] 2.2 Add `publish-bake-target` scenario function that calls Docker module `build-from-bake` and publishes `DockerBuild.image_refs()`, with tests for dry-run publication behavior.
+- [x] 2.1 Add `verify-bake-target` scenario function that calls Docker module `build-from-bake` and builds the resolved target without publishing, with tests for verification behavior.
+- [x] 2.2 Add chainable `with-registry-auth` scenario function that accumulates registry credentials and forwards them to the Docker module, with tests for one and multiple registries.
+- [x] 2.3 Ensure existing `publish-image` uses separately configured registry auth and retains its explicit `image-ref` input, with tests.
+- [x] 2.4 Add `publish-bake-target` scenario function that calls Docker module `build-from-bake` and publishes all resolved `DockerBuild.image_refs()` values using separately configured registry auth, with dry-run tests.
+- [x] 2.5 Rename the Bake wrapper target selector from `target` to `bake-target` for `verify-bake-target` and `publish-bake-target`, keeping explicit image `target` as the optional Dockerfile stage selector, with tests and documentation updates.
 
 ## 3. Hugo Autoprefixer Image
 
