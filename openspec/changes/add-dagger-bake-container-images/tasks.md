@@ -25,9 +25,9 @@
 ## 4. GitHub Actions
 
 - [x] 4.1 Add PR workflow with an always-run `CI Passed` aggregation job so the repository's required status check is available before merging to `master`.
-- [x] 4.2 Add Bake target discovery and verification jobs that call Dagger `verify-bake-target`, pinning the external scenario to `scenarios/container-images/v0.1.0`, and require their success from `CI Passed`.
+- [x] 4.2 Add Bake target discovery and verification jobs that call Dagger `verify-bake-target`, pinning the external scenario to `scenarios/container-images/v0.1.1`, and require their success from `CI Passed`.
 - [x] 4.3 Use the pinned Git module `modules/git/v1.0.0` from the PR workflow to select changed `docker/*` components for the GitHub verification matrix.
-- [ ] 4.4 Update the `container-images` scenario so `bake-target` is optional when a Bake manifest contains exactly one target, then simplify provider workflows to pass only the Bake path.
+- [x] 4.4 Update the `container-images` scenario so `bake-target` is optional when a Bake manifest contains exactly one target, then simplify provider workflows to pass only the Bake path.
 - [ ] 4.5 Add main-branch publish workflow that calls Dagger `publish-bake-target` with GHCR credentials.
 - [ ] 4.6 Add post-publish git tag creation for `docker/hugo-autoprefixer/<version>`.
 - [ ] 4.7 Make registry and repository prefix independently configurable via workflow environment or input while defaulting to `ghcr.io` and `riftonix/container-images`.
