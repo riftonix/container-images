@@ -69,12 +69,10 @@ jobs:
 
       - name: Verify Bake target
         run: |
-          target="${{ matrix.target }}"
-          dagger -m github.com/riftonix/daggerverse/scenarios/container-images@scenarios/container-images/v0.1.0 \
+          dagger -m github.com/riftonix/daggerverse/scenarios/container-images@scenarios/container-images/v0.1.1 \
             call verify-bake-target \
             --source=. \
-            --bake-path="$target/docker-bake.json" \
-            --bake-target="${target##*/}"
+            --bake-path="${{ matrix.target }}/docker-bake.json"
 
   ci-passed:
     name: CI Passed

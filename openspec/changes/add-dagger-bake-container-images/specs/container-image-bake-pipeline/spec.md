@@ -52,12 +52,17 @@ The Dagger container-images scenario SHALL provide a function that publishes all
 
 ### Requirement: Bake wrapper target input is explicit
 
-The Dagger container-images scenario SHALL use a required `bake-target` input for selecting a named Bake manifest target. Explicit image wrappers SHALL keep the optional `target` input for selecting a Dockerfile stage.
+The Dagger container-images scenario SHALL allow callers to omit `bake-target` when a Bake manifest contains exactly one target and SHALL require `bake-target` for selecting among multiple named Bake manifest targets. Explicit image wrappers SHALL keep the optional `target` input for selecting a Dockerfile stage.
 
 #### Scenario: Select Bake manifest target
 
-- **WHEN** a caller invokes `verify-bake-target` or `publish-bake-target`
+- **WHEN** a caller invokes `verify-bake-target` or `publish-bake-target` for a manifest with multiple targets
 - **THEN** the caller provides `bake-target` to select the named entry from `docker-bake.json`
+
+#### Scenario: Select the only Bake manifest target
+
+- **WHEN** a caller invokes `verify-bake-target` or `publish-bake-target` for a manifest with exactly one target and omits `bake-target`
+- **THEN** the scenario selects the only named entry from `docker-bake.json`
 
 #### Scenario: Configure Dockerfile stage for Bake build
 
