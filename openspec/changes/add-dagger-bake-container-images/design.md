@@ -14,7 +14,7 @@ The target model is a monorepo of base OCI images under `docker/`. GitHub Action
 - Support container-images scenario functions that verify and publish Bake targets through the Docker module.
 - Support separately configured registry authentication in the container-images scenario, including multiple registries before one publish operation.
 - Publish `docker/hugo-autoprefixer` as `ghcr.io/riftonix/container-images/hugo-autoprefixer:<hugo-version>-<autoprefixer-version>`.
-- Allow the registry/repository prefix to default to `ghcr.io/riftonix/container-images` and be overridden in CI or local calls.
+- Allow the registry and repository prefix to default to `ghcr.io` and `riftonix/container-images` and be overridden independently in CI or local calls.
 - Configure Renovate automerge for Hugo and autoprefixer version updates.
 - Create git release marker tags after successful publication.
 
@@ -61,9 +61,9 @@ The container-images scenario will expose a chainable `with-registry-auth(addres
 
 Registry credentials are runtime secrets supplied by CI, local environment variables, or a secret manager. They must not be stored in `docker-bake.json`. Bake `tags` describe destination image references and may target multiple registries.
 
-### Use Bake Variables for Registry Override
+### Use Bake Variables for Registry And Repository Overrides
 
-Each per-image `docker-bake.json` will define a `REGISTRY` variable with default `ghcr.io/riftonix/container-images`. The Docker module Bake function will accept variable overrides and use them while resolving target tags. This allows local testing, forks, and future registry migrations without editing the manifest.
+Each per-image `docker-bake.json` will define a `REGISTRY` variable with default `ghcr.io` and a `REPOSITORY_PREFIX` variable with default `riftonix/container-images`. The Docker module Bake function will accept variable overrides and use them while resolving target tags. This allows local testing, forks, repository moves, and future registry migrations without editing the manifest.
 
 ### Use Post-Publish Git Tags
 
@@ -71,7 +71,7 @@ The publish workflow will create `docker/hugo-autoprefixer/<tag>` only after Dag
 
 ### Store Hugo Versions in Bake Variables
 
-For `hugo-autoprefixer`, Bake variables will hold `HUGO_VERSION` and `AUTOPREFIXER_VERSION`. The target tag will render `${REGISTRY}/hugo-autoprefixer:${HUGO_VERSION}-${AUTOPREFIXER_VERSION}` and pass the same values as Docker build args.
+For `hugo-autoprefixer`, Bake variables will hold `HUGO_VERSION` and `AUTOPREFIXER_VERSION`. The target tag will render `${REGISTRY}/${REPOSITORY_PREFIX}/hugo-autoprefixer:${HUGO_VERSION}-${AUTOPREFIXER_VERSION}` and pass the same values as Docker build args.
 
 Renovate will update these variables using custom managers or JSON-compatible extraction, and the Dockerfile will consume the args.
 

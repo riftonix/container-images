@@ -33,9 +33,9 @@ jobs:
       - name: List changed Bake targets
         id: targets
         run: |
-          components="$(
+          targets="$(
             dagger -m github.com/riftonix/daggerverse/modules/git@modules/git/v1.0.0 \
-              call --source=. \
+              call --json --source=. \
               get-changed-components \
               --base-ref=origin/master \
               --head-ref=HEAD \
@@ -43,8 +43,11 @@ jobs:
               --shared-paths=.github/workflows \
               --shared-paths=renovate.json
           )"
-          json="$(printf '%s\n' "$components" | python3 -c 'import json, pathlib, sys; print(json.dumps([{"bake_path": f"{component}/docker-bake.json", "bake_target": pathlib.PurePosixPath(component).name} for line in sys.stdin if (component := line.strip())]))')"
-          echo "targets=$json" >> "$GITHUB_OUTPUT"
+          {
+            echo 'targets<<EOF'
+            echo "$targets"
+            echo EOF
+          } >> "$GITHUB_OUTPUT"
 
   verify:
     name: Verify
@@ -66,11 +69,12 @@ jobs:
 
       - name: Verify Bake target
         run: |
+          target="${{ matrix.target }}"
           dagger -m github.com/riftonix/daggerverse/scenarios/container-images@scenarios/container-images/v0.1.0 \
             call verify-bake-target \
             --source=. \
-            --bake-path="${{ matrix.target.bake_path }}" \
-            --bake-target="${{ matrix.target.bake_target }}"
+            --bake-path="$target/docker-bake.json" \
+            --bake-target="${target##*/}"
 
   ci-passed:
     name: CI Passed

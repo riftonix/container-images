@@ -85,12 +85,12 @@ The Dagger container-images scenario SHALL allow callers to configure one or mor
 
 ### Requirement: Registry prefix is overridable
 
-The publish pipeline SHALL default the registry/repository prefix to `ghcr.io/riftonix/container-images` and SHALL allow callers to override it.
+The publish pipeline SHALL default the registry to `ghcr.io` and the repository prefix to `riftonix/container-images`, and SHALL allow callers to override them independently.
 
 #### Scenario: Publish to alternate registry
 
-- **WHEN** a caller provides a registry override while publishing the `hugo-autoprefixer` target
-- **THEN** the image reference uses the override prefix and keeps the same image name and version tag
+- **WHEN** a caller provides registry or repository prefix overrides while publishing the `hugo-autoprefixer` target
+- **THEN** the image reference uses the overrides and keeps the same image name and version tag
 
 ### Requirement: Hugo image version follows dependency versions
 
