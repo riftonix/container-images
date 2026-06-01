@@ -13,7 +13,7 @@ This repository needs a repeatable monorepo workflow for building and publishing
 - Add GitHub Actions workflows that trigger verification and publication, but delegate image build/publish logic to Dagger.
 - Add Renovate configuration so Hugo and autoprefixer version bumps are automatically proposed and automerged.
 - Create git tags after successful publication in the form `docker/hugo-autoprefixer/<tag>`.
-- Allow the registry/repository prefix to be overridden while defaulting to `ghcr.io/riftonix/container-images`.
+- Allow the registry and repository prefix to be overridden independently while defaulting to `ghcr.io` and `riftonix/container-images`.
 
 ## Capabilities
 

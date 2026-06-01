@@ -1,7 +1,10 @@
 {
   "variable": {
     "REGISTRY": {
-      "default": "ghcr.io/riftonix/container-images"
+      "default": "ghcr.io"
+    },
+    "REPOSITORY_PREFIX": {
+      "default": "riftonix/container-images"
     },
     "HUGO_VERSION": {
       "default": "0.147.1"
@@ -19,7 +22,7 @@
         "AUTOPREFIXER_VERSION": "${AUTOPREFIXER_VERSION}"
       },
       "tags": [
-        "${REGISTRY}/hugo-autoprefixer:${HUGO_VERSION}-${AUTOPREFIXER_VERSION}"
+        "${REGISTRY}/${REPOSITORY_PREFIX}/hugo-autoprefixer:${HUGO_VERSION}-${AUTOPREFIXER_VERSION}"
       ],
       "labels": {
         "org.opencontainers.image.title": "hugo-autoprefixer",
