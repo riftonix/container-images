@@ -7,7 +7,7 @@
       "default": "riftonix/container-images"
     },
     "HUGO_VERSION": {
-      "default": "0.147.1",
+      "default": "0.154.5",
       "description": "renovate: datasource=docker depName=hugomods/hugo extractVersion=^exts-(?<version>.+)$"
     },
     "AUTOPREFIXER_VERSION": {
