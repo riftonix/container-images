@@ -1,0 +1,64 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "automerge": true,
+  "automergeType": "pr",
+  "platformAutomerge": true,
+  "ignorePaths": [
+    "**/node_modules/**",
+    "**/bower_components/**",
+    "**/vendor/**"
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Update Dagger CLI version in GitHub Actions",
+      "managerFilePatterns": ["/^\\.github/workflows/.*\\.ya?ml$/"],
+      "matchStrings": [
+        "DAGGER_VERSION:\\s*(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)"
+      ],
+      "depNameTemplate": "dagger",
+      "datasourceTemplate": "custom.manjaro-stable-extra",
+      "versioningTemplate": "semver"
+    },
+    {
+      "customType": "regex",
+      "description": "Update released daggerverse refs in repository automation",
+      "managerFilePatterns": ["/^\\.github/workflows/.*\\.ya?ml$/", "/^Makefile$/"],
+      "matchStrings": [
+        "github\\.com/riftonix/daggerverse/(?<tagPrefix>(?:modules|scenarios)/[a-z0-9-]+)@(?:modules|scenarios)/[a-z0-9-]+/v(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)"
+      ],
+      "depNameTemplate": "riftonix/daggerverse",
+      "datasourceTemplate": "github-tags",
+      "extractVersionTemplate": "^{{{tagPrefix}}}/v(?<version>[0-9]+\\.[0-9]+\\.[0-9]+)$",
+      "versioningTemplate": "semver"
+    },
+    {
+      "customType": "regex",
+      "description": "Update annotated Docker Bake variables",
+      "managerFilePatterns": ["/^docker/.*/docker-bake\\.json$/"],
+      "matchStrings": [
+        "\"description\"\\s*:\\s*\"renovate: datasource=(?<datasource>[a-z-]+) depName=(?<depName>[^\\s\"]+)(?: versioning=(?<versioning>[^\\s\"]+))?(?: extractVersion=(?<extractVersion>[^\\s\"]+))?\"[^{}]*?\"default\"\\s*:\\s*\"(?<currentValue>[^\"]+)\"",
+        "\"default\"\\s*:\\s*\"(?<currentValue>[^\"]+)\"[^{}]*?\"description\"\\s*:\\s*\"renovate: datasource=(?<datasource>[a-z-]+) depName=(?<depName>[^\\s\"]+)(?: versioning=(?<versioning>[^\\s\"]+))?(?: extractVersion=(?<extractVersion>[^\\s\"]+))?\""
+      ]
+    }
+  ],
+  "customDatasources": {
+    "manjaro-stable-extra": {
+      "defaultRegistryUrlTemplate": "https://mirror.yandex.ru/mirrors/manjaro/stable/extra/x86_64/",
+      "format": "html"
+    }
+  },
+  "packageRules": [
+    {
+      "matchDatasources": ["custom.manjaro-stable-extra"],
+      "matchPackageNames": ["dagger"],
+      "extractVersion": "(?:^|/)dagger-(?<version>[0-9]+\\.[0-9]+\\.[0-9]+)-[0-9]+-x86_64\\.pkg\\.tar\\.zst$",
+      "groupName": "Dagger CI"
+    },
+    {
+      "matchFileNames": ["docker/**/docker-bake.json"],
+      "labels": ["image-dependencies"]
+    }
+  ]
+}

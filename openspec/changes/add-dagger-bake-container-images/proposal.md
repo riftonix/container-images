@@ -12,7 +12,7 @@ This repository needs a repeatable monorepo workflow for building and publishing
 - Extend the Dagger container-images scenario with thin verify/publish wrappers and a metadata-only Bake-driven `get-bake-release-tag` renderer for Docker Bake targets.
 - Add an idempotent `ensure-pushed-tag` operation to the reusable Dagger Git module.
 - Add GitHub Actions workflows that trigger verification and publication, but delegate image build/publish logic to Dagger.
-- Add Renovate configuration so Hugo and autoprefixer version bumps are automatically proposed and automerged.
+- Add Renovate configuration so operational dependency pins across workflows and Bake manifests are automatically proposed and automerged, including Dagger CLI, GitHub Actions, released Dagger modules/scenarios, Hugo, and autoprefixer.
 - Create git tags after successful publication in the form `docker/hugo-autoprefixer/<tag>` by composing the container-images scenario and Git module in one Dagger Shell invocation.
 - Allow the registry and repository prefix to be overridden independently while defaulting to `ghcr.io` and `riftonix/container-images`.
 
@@ -35,5 +35,5 @@ This repository needs a repeatable monorepo workflow for building and publishing
 - Modifies the reusable Dagger Git module to provide authenticated, idempotent post-publish Git tag creation.
 - Uses Dagger Shell composition so the provider workflow can connect the image-specific release marker to the generic Git operation in one Dagger invocation.
 - Adds GitHub Actions workflows for PR verification and main-branch publication.
-- Adds Renovate custom managers/package rules for Dockerfile or bake-managed version updates.
+- Adds Renovate configuration for workflow and Bake-managed dependency updates, including custom managers for pins that Renovate does not detect natively.
 - Uses GHCR package publishing and repository git tags as release markers.

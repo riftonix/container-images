@@ -171,9 +171,24 @@ The reusable Dagger Git module SHALL provide an authenticated, provider-neutral 
 - **WHEN** `ensure-pushed-tag` is called for a tag that already exists on the remote
 - **THEN** the Git module returns the tag name without creating or pushing a duplicate tag
 
-### Requirement: Renovate updates Hugo image dependencies
+### Requirement: Renovate updates operational dependency pins
 
-Renovate SHALL detect and automerge supported Hugo and autoprefixer version updates used by the `hugo-autoprefixer` Bake target.
+Renovate SHALL detect and automerge supported updates for every operational dependency pin committed in workflows and Bake manifests.
+
+#### Scenario: Dagger CLI update
+
+- **WHEN** a newer supported Dagger CLI version is available
+- **THEN** Renovate opens and automerges a pull request updating `DAGGER_VERSION` in `ci.yaml` and `publish.yaml`
+
+#### Scenario: GitHub Actions update
+
+- **WHEN** a newer supported GitHub Action version is available
+- **THEN** Renovate opens and automerges a pull request updating workflow `uses:` references through its default built-in GitHub Actions manager without custom manager configuration
+
+#### Scenario: Released daggerverse dependency update
+
+- **WHEN** a newer compatible daggerverse module or scenario tag is available
+- **THEN** Renovate opens and automerges a pull request updating matching released daggerverse refs in workflows
 
 #### Scenario: Hugo version update
 
@@ -184,6 +199,11 @@ Renovate SHALL detect and automerge supported Hugo and autoprefixer version upda
 
 - **WHEN** a newer compatible `autoprefixer` npm version is available
 - **THEN** Renovate opens and automerges a pull request updating the autoprefixer version used by the Bake target
+
+#### Scenario: Operational pin audit
+
+- **WHEN** Renovate configuration is changed
+- **THEN** every committed operational version pin is either covered by a Renovate manager or explicitly documented as intentionally unmanaged
 
 ## Implementation Notes (Task 1.1)
 
