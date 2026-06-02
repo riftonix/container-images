@@ -11,7 +11,7 @@
       "description": "renovate: datasource=docker depName=hugomods/hugo extractVersion=^exts-(?<version>.+)$"
     },
     "AUTOPREFIXER_VERSION": {
-      "default": "10.4.21",
+      "default": "10.5.0",
       "description": "renovate: datasource=npm depName=autoprefixer"
     }
   },
