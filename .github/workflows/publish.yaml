@@ -38,7 +38,8 @@ jobs:
           targets="$(
             make --no-print-directory changed-components \
               BASE_REF="${{ github.event.before }}" \
-              HEAD_REF="${{ github.sha }}"
+              HEAD_REF="${{ github.sha }}" \
+              SHARED_PATHS=
           )"
           {
             echo 'targets<<EOF'
