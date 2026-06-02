@@ -18,6 +18,20 @@ The reusable Dagger Docker module SHALL provide a function that builds an image 
 - **WHEN** a caller requests a Docker module build for target `hugo-autoprefixer` with bake path `docker/hugo-autoprefixer/docker-bake.json`
 - **THEN** the Docker module resolves the target from that Bake file and returns a `DockerBuild` configured with the resolved context, Dockerfile, args, platforms, labels, and image references
 
+### Requirement: Docker module resolves Bake metadata without building
+
+The reusable Dagger Docker module SHALL expose resolved Bake target metadata without running a container image build.
+
+#### Scenario: Resolve Hugo target metadata
+
+- **WHEN** a caller requests Docker module metadata for target `hugo-autoprefixer` with bake path `docker/hugo-autoprefixer/docker-bake.json`
+- **THEN** `resolve-bake-target` returns the resolved context, Dockerfile, args, platforms, labels, and image references without building an image
+
+#### Scenario: Build reuses resolved metadata
+
+- **WHEN** a caller requests `build-from-bake`
+- **THEN** the Docker module uses the same `resolve-bake-target` parser and interpolation behavior before running the Dagger-native build
+
 ### Requirement: DockerBuild exposes Bake image references
 
 The reusable Dagger Docker module SHALL expose resolved image references and tags from `DockerBuild`.
@@ -127,12 +141,35 @@ GitHub Actions workflows SHALL trigger on repository events and SHALL delegate i
 
 ### Requirement: Releases create git tag markers after publish
 
-The publish workflow SHALL create a git tag after successful image publication.
+The publish workflow SHALL create a git tag after successful image publication by composing Dagger modules in one Dagger Shell invocation.
 
 #### Scenario: Create post-publish tag
 
 - **WHEN** `hugo-autoprefixer` version `0.147.1-10.4.21` is published successfully
-- **THEN** the workflow creates tag `docker/hugo-autoprefixer/0.147.1-10.4.21`
+- **THEN** the workflow renders and pushes tag `docker/hugo-autoprefixer/0.147.1-10.4.21` through one Dagger Shell invocation
+
+### Requirement: Dagger scenario renders Bake release markers
+
+The Dagger container-images scenario SHALL render a Git release marker from resolved Bake metadata without performing Git operations or building an image.
+
+#### Scenario: Render Hugo release marker
+
+- **WHEN** a caller requests the release marker for `docker/hugo-autoprefixer/docker-bake.json`
+- **THEN** `get-bake-release-tag` uses Docker `resolve-bake-target` and returns `docker/hugo-autoprefixer/0.147.1-10.4.21` without building an image
+
+### Requirement: Git module ensures pushed tags
+
+The reusable Dagger Git module SHALL provide an authenticated, provider-neutral operation that ensures a requested Git tag exists on the remote.
+
+#### Scenario: Push missing release tag
+
+- **WHEN** `ensure-pushed-tag` is called for a tag that does not exist on the remote
+- **THEN** the Git module creates a lightweight tag on `HEAD`, pushes it to the remote, and returns the tag name
+
+#### Scenario: Accept existing release tag
+
+- **WHEN** `ensure-pushed-tag` is called for a tag that already exists on the remote
+- **THEN** the Git module returns the tag name without creating or pushing a duplicate tag
 
 ### Requirement: Renovate updates Hugo image dependencies
 

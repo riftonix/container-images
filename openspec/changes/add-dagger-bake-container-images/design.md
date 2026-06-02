@@ -9,10 +9,13 @@ The target model is a monorepo of base OCI images under `docker/`. GitHub Action
 **Goals:**
 
 - Describe image build targets with per-image `docker-bake.json` files under `docker/<image>/`.
-- Support Docker module functions that build from Bake target names and return normal `DockerBuild` objects.
+- Support a Docker module function that resolves Bake target metadata without building an image.
+- Support Docker module functions that build from resolved Bake target metadata and return normal `DockerBuild` objects.
 - Support `DockerBuild.image_refs()` and `DockerBuild.tags()` accessors for Bake-derived image references.
 - Support container-images scenario functions that verify and publish Bake targets through the Docker module.
+- Support a container-images scenario function that renders a Git release marker from resolved Bake metadata without performing Git operations.
 - Support separately configured registry authentication in the container-images scenario, including multiple registries before one publish operation.
+- Support an idempotent Git module operation that creates and pushes a requested release marker tag.
 - Publish `docker/hugo-autoprefixer` as `ghcr.io/riftonix/container-images/hugo-autoprefixer:<hugo-version>-<autoprefixer-version>`.
 - Allow the registry and repository prefix to default to `ghcr.io` and `riftonix/container-images` and be overridden independently in CI or local calls.
 - Configure Renovate automerge for Hugo and autoprefixer version updates.
@@ -37,15 +40,15 @@ Alternatives considered:
 - Compose YAML: standard, but less direct for per-target release tag logic.
 - Bake HCL: ergonomic for humans, but harder to parse without invoking Docker tooling.
 
-### Add Bake Support to the Docker Module
+### Add Metadata-Only Bake Resolution to the Docker Module
 
-Bake parsing and resolution belongs in the reusable Docker module because it is Docker build metadata, not CI policy. The module will expose a function such as `build-from-bake` that accepts `source`, `bake-path`, `target`, and optional variable overrides. It will return the existing `DockerBuild` object so smoke checks, dry-run publication, registry auth, and `publish` remain unchanged.
+Bake parsing and resolution belongs in the reusable Docker module because it is Docker build metadata, not CI policy. The module will expose `resolve-bake-target(source, bake-path, target=None, variable-overrides=None) -> DockerBakeTarget`. The returned object contains resolved context, Dockerfile, Dockerfile target, args, tags, labels, and platforms without running a container image build.
 
-`DockerBuild` will gain `image_refs()` and `tags()` accessors. Explicit `build(...)` calls return empty lists for these accessors. Bake-derived builds return the resolved Bake tags as image references, and `tags()` returns the tag portion or equivalent resolved tag strings needed by callers.
+`build-from-bake` will call `resolve-bake-target` and translate the resolved metadata into the existing Dagger-native `build(...)` call. `DockerBuild` will gain `image_refs()` and `tags()` accessors. Explicit `build(...)` calls return empty lists for these accessors. Bake-derived builds return the resolved Bake tags as image references, and `tags()` returns the tag portion or equivalent resolved tag strings needed by callers.
 
 ### Build With Dagger APIs, Not `docker buildx bake --push`
 
-The Docker module will accept `--bake-path`, parse the Bake target from that file, and translate supported fields into Dagger-native build calls. This keeps CI portable and avoids depending on Docker socket access, external Buildx builders, or Buildx CLI auth inside a Dagger container.
+The Docker module will accept `--bake-path`, resolve the Bake target metadata, and translate supported fields into Dagger-native build calls only when a caller requests `build-from-bake`. Metadata consumers can call `resolve-bake-target` without triggering a build. This keeps CI portable and avoids depending on Docker socket access, external Buildx builders, or Buildx CLI auth inside a Dagger container.
 
 The initial supported target fields are `context`, `dockerfile`, `args`, `tags`, `labels`, and `platforms`. Unsupported fields must fail with a clear error instead of being ignored.
 
@@ -65,9 +68,13 @@ Registry credentials are runtime secrets supplied by CI, local environment varia
 
 Each per-image `docker-bake.json` will define a `REGISTRY` variable with default `ghcr.io` and a `REPOSITORY_PREFIX` variable with default `riftonix/container-images`. The Docker module Bake function will accept variable overrides and use them while resolving target tags. This allows local testing, forks, repository moves, and future registry migrations without editing the manifest.
 
-### Use Post-Publish Git Tags
+### Compose Post-Publish Git Tags With Dagger Shell
 
-The publish workflow will create `docker/hugo-autoprefixer/<tag>` only after Dagger successfully publishes the image. Tags are release markers, not the trigger for publication. This avoids relying on tag-created workflows from bot-created tags.
+The container-images scenario will expose `get-bake-release-tag(source, bake-path, component-path, bake-target=None, variable-overrides=None) -> str`. It calls Docker `resolve-bake-target` without building an image, validates that the resolved image references map to one image version, and returns a release marker in the form `<component-path>/<image-version>`, for example `docker/hugo-autoprefixer/0.147.1-10.4.21`. The component path is explicit because a Bake file may be supplied from an arbitrary source layout. The function does not receive Git credentials or perform Git operations.
+
+The reusable Git module will expose `ensure-pushed-tag(tag, remote="origin") -> str`. It fetches remote tags, returns successfully when the requested tag already exists, and otherwise creates a lightweight tag on `HEAD` and pushes it. Authentication remains configured through the Git module's existing `with-https-token-auth` function.
+
+The publish workflow will use one Dagger Shell invocation after checkout: first publish the resolved image references through the container-images scenario, then render the release marker through `get-bake-release-tag`, then pass that string to the Git module's authenticated `ensure-pushed-tag`. Tags are release markers, not publication triggers. This keeps image-specific metadata in the image scenario, generic Git release behavior in the Git module, and provider-specific credentials in GitHub Actions.
 
 ### Store Hugo Versions in Bake Variables
 
@@ -78,8 +85,9 @@ Renovate will update these variables using custom managers or JSON-compatible ex
 ## Risks / Trade-offs
 
 - Bake feature coverage is partial -> fail clearly on unsupported fields in the Docker module and add support only when needed.
+- Bake parsing could be duplicated between metadata and build consumers -> centralize parsing and interpolation in `resolve-bake-target`, then implement `build-from-bake` on top of the resolved object.
 - JSON Bake is less ergonomic than HCL -> prefer machine-readability because Dagger must resolve it without Docker CLI.
 - Renovate may need custom regex for JSON variables -> keep variable names stable and add focused package rules.
-- Git tag creation can race if the same version is republished -> make tag creation idempotent or fail with a clear "already released" message after confirming the image exists.
+- Git tag creation can race if the same version is republished -> keep `ensure-pushed-tag` idempotent for an existing remote tag and fail clearly if a concurrent conflicting push occurs.
 - Updating external Dagger modules/scenarios may require a coordinated daggerverse change -> implement and test the Docker module first, then update the scenario wrapper, then consume it from this repository.
 - Publishing to multiple private registries requires separate credentials -> configure one or more chainable scenario registry auth entries before publication and keep secrets outside Bake manifests.

@@ -28,22 +28,28 @@
 - [x] 4.2 Add Bake target discovery and verification jobs that call Dagger `verify-bake-target`, pinning the external scenario to `scenarios/container-images/v0.1.1`, and require their success from `CI Passed`.
 - [x] 4.3 Use the pinned Git module `modules/git/v1.0.0` from the PR workflow to select changed `docker/*` components for the GitHub verification matrix.
 - [x] 4.4 Update the `container-images` scenario so `bake-target` is optional when a Bake manifest contains exactly one target, then simplify provider workflows to pass only the Bake path.
-- [ ] 4.5 Add main-branch publish workflow that calls Dagger `publish-bake-target` with GHCR credentials.
-- [ ] 4.6 Add post-publish git tag creation for `docker/hugo-autoprefixer/<version>`.
-- [ ] 4.7 Make registry and repository prefix independently configurable via workflow environment or input while defaulting to `ghcr.io` and `riftonix/container-images`.
-- [ ] 4.8 Ensure workflows request only required permissions for contents, packages, and pull requests.
+- [x] 4.5 Add main-branch publish workflow that calls Dagger `publish-bake-target` with GHCR credentials.
+- [x] 4.6 Ensure workflows request only required permissions for contents, packages, and pull requests.
 
-## 5. Renovate
+## 5. Dagger Shell Git Release Tags
 
-- [ ] 5.1 Add Renovate base configuration extending the existing daggerverse automerge policy.
-- [ ] 5.2 Add a generic Renovate custom manager for `docker/**/docker-bake.json` variables whose `description` contains `renovate:` metadata.
-- [ ] 5.3 Annotate `HUGO_VERSION` and `AUTOPREFIXER_VERSION` Bake variables with Renovate metadata in their standard `description` fields.
-- [ ] 5.4 Group or label Hugo image dependency updates so automerge triggers the normal verify and publish path.
+- [x] 5.1 Refactor the reusable Docker module to expose metadata-only `resolve-bake-target`, reuse it from `build-from-bake`, and add Docker module tests proving metadata resolution does not require a build.
+- [x] 5.2 Add `get-bake-release-tag` to the `container-images` scenario: use Docker `resolve-bake-target` and render the release marker `<component-path>/<image-version>` without performing Git operations or building an image; add container-images scenario tests for the rendered Hugo marker.
+- [x] 5.3 Add provider-neutral `ensure-pushed-tag` to the reusable Git module using its existing authentication configuration; add Git module tests for newly created and existing remote tags.
+- [x] 5.4 Update the main-branch publish workflow to run publication, `get-bake-release-tag`, and authenticated Git `ensure-pushed-tag` sequentially through one Dagger Shell invocation.
+- [x] 5.5 Grant the publish workflow `contents: write` for post-publish Git tags while retaining only the required package publication permission.
 
-## 6. Verification
+## 6. Renovate
 
-- [ ] 6.1 Run Docker module tests for the updated Bake support.
-- [ ] 6.2 Run Dagger scenario tests for the updated container-images scenario.
-- [ ] 6.3 Run local dry-run verification for `hugo-autoprefixer`.
-- [ ] 6.4 Run local publish dry-run or equivalent validation for `hugo-autoprefixer`.
-- [ ] 6.5 Validate the OpenSpec change status is apply-ready.
+- [ ] 6.1 Add Renovate base configuration extending the existing daggerverse automerge policy.
+- [ ] 6.2 Add a generic Renovate custom manager for `docker/**/docker-bake.json` variables whose `description` contains `renovate:` metadata.
+- [ ] 6.3 Annotate `HUGO_VERSION` and `AUTOPREFIXER_VERSION` Bake variables with Renovate metadata in their standard `description` fields.
+- [ ] 6.4 Group or label Hugo image dependency updates so automerge triggers the normal verify and publish path.
+
+## 7. Verification
+
+- [ ] 7.1 Run Docker module tests for the updated Bake support.
+- [ ] 7.2 Run Dagger scenario tests for the updated container-images scenario.
+- [ ] 7.3 Run local dry-run verification for `hugo-autoprefixer`.
+- [ ] 7.4 Run local publish dry-run or equivalent validation for `hugo-autoprefixer`.
+- [ ] 7.5 Validate the OpenSpec change status is apply-ready.
