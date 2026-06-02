@@ -34,14 +34,8 @@ jobs:
         id: targets
         run: |
           targets="$(
-            dagger -m github.com/riftonix/daggerverse/modules/git@modules/git/v1.0.0 \
-              call --json --source=. \
-              get-changed-components \
-              --base-ref=origin/master \
-              --head-ref=HEAD \
-              --component-roots='docker/*' \
-              --shared-paths=.github/workflows \
-              --shared-paths=renovate.json
+            make --no-print-directory changed-components \
+              SHARED_PATHS='.github/workflows renovate.json Makefile'
           )"
           {
             echo 'targets<<EOF'
@@ -68,11 +62,7 @@ jobs:
           version: ${{ env.DAGGER_VERSION }}
 
       - name: Verify Bake target
-        run: |
-          dagger -m github.com/riftonix/daggerverse/scenarios/container-images@scenarios/container-images/v0.1.1 \
-            call verify-bake-target \
-            --source=. \
-            --bake-path="${{ matrix.target }}/docker-bake.json"
+        run: make verify "${{ matrix.target }}"
 
   ci-passed:
     name: CI Passed

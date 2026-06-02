@@ -18,7 +18,7 @@ The target model is a monorepo of base OCI images under `docker/`. GitHub Action
 - Support an idempotent Git module operation that creates and pushes a requested release marker tag.
 - Publish `docker/hugo-autoprefixer` as `ghcr.io/riftonix/container-images/hugo-autoprefixer:<hugo-version>-<autoprefixer-version>`.
 - Allow the registry and repository prefix to default to `ghcr.io` and `riftonix/container-images` and be overridden independently in CI or local calls.
-- Configure Renovate automerge for Hugo and autoprefixer version updates.
+- Configure Renovate automerge for every operational dependency pin in this repository: Dagger CLI, GitHub Actions, released Dagger modules/scenarios, Hugo, and autoprefixer.
 - Create git release marker tags after successful publication.
 
 **Non-Goals:**
@@ -82,12 +82,25 @@ For `hugo-autoprefixer`, Bake variables will hold `HUGO_VERSION` and `AUTOPREFIX
 
 Renovate will update these variables using custom managers or JSON-compatible extraction, and the Dockerfile will consume the args.
 
+### Cover All Operational Version Pins With Renovate
+
+Renovate will extend the daggerverse automerge policy and cover every operational version pin committed in this repository:
+
+- rely on Renovate's default built-in `github-actions` manager for workflow `uses:` references such as `actions/checkout` and `dagger/dagger-for-github`; no custom manager is needed for these pins
+- use the same Dagger CI custom datasource and regex manager pattern as daggerverse for `DAGGER_VERSION` in `.github/workflows/*.yaml`
+- use a regex custom manager with GitHub tags for released daggerverse refs such as `github.com/riftonix/daggerverse/modules/git@modules/git/v1.0.1` and `github.com/riftonix/daggerverse/scenarios/container-images@scenarios/container-images/v0.1.2`
+- use Renovate metadata in `docker/**/docker-bake.json` variable descriptions for image-specific dependencies such as `hugomods/hugo` and `autoprefixer`
+
+Version strings used only as explanatory OpenSpec examples are not operational pins and must not be updated as dependencies. After adding the configuration, audit the repository's committed operational pins against Renovate coverage so future uncategorized pins are visible.
+
+`REGISTRY` and `REPOSITORY_PREFIX` Bake defaults are runtime configuration, not dependency versions, and are intentionally unmanaged. The Docker Dagger module is consumed transitively through the released container-images scenario, so this repository has no direct `modules/docker` pin to update.
+
 ## Risks / Trade-offs
 
 - Bake feature coverage is partial -> fail clearly on unsupported fields in the Docker module and add support only when needed.
 - Bake parsing could be duplicated between metadata and build consumers -> centralize parsing and interpolation in `resolve-bake-target`, then implement `build-from-bake` on top of the resolved object.
 - JSON Bake is less ergonomic than HCL -> prefer machine-readability because Dagger must resolve it without Docker CLI.
-- Renovate may need custom regex for JSON variables -> keep variable names stable and add focused package rules.
+- Renovate custom managers can silently miss non-standard pins -> annotate Bake variables, add focused regex managers for Dagger CLI and daggerverse refs, and audit every operational pin after configuration.
 - Git tag creation can race if the same version is republished -> keep `ensure-pushed-tag` idempotent for an existing remote tag and fail clearly if a concurrent conflicting push occurs.
 - Updating external Dagger modules/scenarios may require a coordinated daggerverse change -> implement and test the Docker module first, then update the scenario wrapper, then consume it from this repository.
 - Publishing to multiple private registries requires separate credentials -> configure one or more chainable scenario registry auth entries before publication and keep secrets outside Bake manifests.

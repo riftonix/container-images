@@ -41,15 +41,19 @@
 
 ## 6. Renovate
 
-- [ ] 6.1 Add Renovate base configuration extending the existing daggerverse automerge policy.
-- [ ] 6.2 Add a generic Renovate custom manager for `docker/**/docker-bake.json` variables whose `description` contains `renovate:` metadata.
-- [ ] 6.3 Annotate `HUGO_VERSION` and `AUTOPREFIXER_VERSION` Bake variables with Renovate metadata in their standard `description` fields.
-- [ ] 6.4 Group or label Hugo image dependency updates so automerge triggers the normal verify and publish path.
+- [x] 6.1 Add Renovate base configuration extending the existing daggerverse automerge policy and verify that the default built-in GitHub Actions manager remains enabled for workflow `uses:` references without custom manager configuration.
+- [x] 6.2 Add the daggerverse-style Dagger CI custom datasource and regex manager so Renovate updates `DAGGER_VERSION` together in `.github/workflows/ci.yaml` and `.github/workflows/publish.yaml`.
+- [x] 6.3 Add a regex custom manager for released daggerverse workflow refs, covering `modules/git@modules/git/v*` and `scenarios/container-images@scenarios/container-images/v*` tags.
+- [x] 6.4 Add a generic Renovate custom manager for `docker/**/docker-bake.json` variables whose `description` contains `renovate:` metadata.
+- [x] 6.5 Annotate `HUGO_VERSION` and `AUTOPREFIXER_VERSION` Bake variables with Renovate metadata in their standard `description` fields.
+- [x] 6.6 Label Docker Bake dependency updates with `image-dependencies` for classification while keeping independent image updates ungrouped so automerge triggers the normal verify and publish path.
+- [x] 6.7 Audit every committed operational version pin and document any intentionally unmanaged pin; exclude explanatory OpenSpec example values from dependency updates.
 
 ## 7. Verification
 
-- [ ] 7.1 Run Docker module tests for the updated Bake support.
-- [ ] 7.2 Run Dagger scenario tests for the updated container-images scenario.
-- [ ] 7.3 Run local dry-run verification for `hugo-autoprefixer`.
-- [ ] 7.4 Run local publish dry-run or equivalent validation for `hugo-autoprefixer`.
-- [ ] 7.5 Validate the OpenSpec change status is apply-ready.
+- [x] 7.1 Run Docker module tests for the updated Bake support.
+- [x] 7.2 Run Dagger scenario tests for the updated container-images scenario.
+- [x] 7.3 Run local dry-run verification for `hugo-autoprefixer`.
+- [x] 7.4 Run local publish dry-run or equivalent validation for `hugo-autoprefixer`.
+- [x] 7.5 Validate the OpenSpec change status is apply-ready.
+- [x] 7.6 Update GitHub Actions workflows to call the root Makefile image entry points so local and CI execution use the same commands.
