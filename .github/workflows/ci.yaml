@@ -34,8 +34,7 @@ jobs:
         id: targets
         run: |
           targets="$(
-            make --no-print-directory changed-components \
-              SHARED_PATHS='.github/workflows renovate.json Makefile'
+            make --no-print-directory changed-components
           )"
           {
             echo 'targets<<EOF'
