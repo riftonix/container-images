@@ -46,6 +46,7 @@ jobs:
     name: Verify
     runs-on: ubuntu-latest
     needs: prepare-targets
+    if: ${{ needs.prepare-targets.outputs.targets != '[]' }}
     strategy:
       fail-fast: false
       matrix:
