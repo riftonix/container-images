@@ -1,6 +1,6 @@
 ARG HUGO_VERSION
 
-FROM hugomods/hugo:exts-${HUGO_VERSION}
+FROM hugomods/hugo:debian-${HUGO_VERSION}
 
 ARG AUTOPREFIXER_VERSION
 
