@@ -19,12 +19,16 @@
       ],
       "depNameTemplate": "manjaro_stable/dagger",
       "datasourceTemplate": "repology",
-      "versioningTemplate": "semver"
+      "versioningTemplate": "semver",
+      "extractVersionTemplate": "^(?<version>[0-9]+\\.[0-9]+\\.[0-9]+)"
     },
     {
       "customType": "regex",
       "description": "Update released daggerverse refs in repository automation",
-      "managerFilePatterns": ["/^\\.github/workflows/.*\\.ya?ml$/", "/^Makefile$/"],
+      "managerFilePatterns": [
+        "/^\\.github/workflows/.*\\.ya?ml$/",
+        "/^Makefile$/"
+      ],
       "matchStrings": [
         "github\\.com/riftonix/daggerverse/(?<tagPrefix>(?:modules|scenarios)/[a-z0-9-]+)@(?:modules|scenarios)/[a-z0-9-]+/v(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)"
       ],

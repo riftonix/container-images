@@ -30,7 +30,7 @@
         "org.opencontainers.image.title": "hugo-autoprefixer",
         "org.opencontainers.image.version": "${HUGO_VERSION}-${AUTOPREFIXER_VERSION}",
         "org.opencontainers.image.source": "https://github.com/riftonix/container-images",
-        "org.opencontainers.image.base.name": "hugomods/hugo:exts-${HUGO_VERSION}",
+        "org.opencontainers.image.base.name": "hugomods/hugo:debian-${HUGO_VERSION}",
         "io.riftonix.container-images.hugo.version": "${HUGO_VERSION}",
         "io.riftonix.container-images.autoprefixer.version": "${AUTOPREFIXER_VERSION}"
       },
