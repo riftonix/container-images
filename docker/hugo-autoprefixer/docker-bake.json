@@ -8,7 +8,7 @@
     },
     "HUGO_VERSION": {
       "default": "0.154.5",
-      "description": "renovate: datasource=docker depName=hugomods/hugo extractVersion=^exts-(?<version>.+)$"
+      "description": "renovate: datasource=docker depName=hugomods/hugo extractVersion=^debian-(?<version>.+)$"
     },
     "AUTOPREFIXER_VERSION": {
       "default": "10.5.2",
