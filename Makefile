@@ -66,29 +66,25 @@ check-publish-input:
 	fi
 
 publish: check-image-component check-publish-input
-	$(DAGGER_ENV) dagger <<'EOF'
-	$(CONTAINER_IMAGES_SCENARIO) |
-	  with-registry-auth \
-	    --address='$(REGISTRY_ADDRESS)' \
-	    --username='$(REGISTRY_USERNAME)' \
-	    --password=env://$(REGISTRY_PASSWORD_ENV) |
-	  publish-bake-target \
-	    --source=. \
-	    --bake-path='$(SELECTED_COMPONENT)/docker-bake.json'
-	tag=$$(
-	  $(CONTAINER_IMAGES_SCENARIO) |
-	    get-bake-release-tag \
-	      --source=. \
-	      --bake-path='$(SELECTED_COMPONENT)/docker-bake.json' \
-	      --component-path='$(SELECTED_COMPONENT)'
-	)
-	$(GIT_MODULE) --source=. |
-	  with-https-token-auth \
-	    --host='$(GIT_HOST)' \
-	    --username='$(GIT_USERNAME)' \
-	    --token=env://$(GIT_TOKEN_ENV) |
-	  ensure-pushed-tag --tag="$$tag"
-	EOF
+	$(DAGGER_ENV) dagger -m $(CONTAINER_IMAGES_SCENARIO) call --progress=plain \
+		with-registry-auth \
+			--address='$(REGISTRY_ADDRESS)' \
+			--username='$(REGISTRY_USERNAME)' \
+			--password=env://$(REGISTRY_PASSWORD_ENV) \
+		publish-bake-target \
+			--source=. \
+			--bake-path='$(SELECTED_COMPONENT)/docker-bake.json'
+	tag=$$($(DAGGER_ENV) dagger -m $(CONTAINER_IMAGES_SCENARIO) call --progress=plain \
+		get-bake-release-tag \
+			--source=. \
+			--bake-path='$(SELECTED_COMPONENT)/docker-bake.json' \
+			--component-path='$(SELECTED_COMPONENT)')
+	$(DAGGER_ENV) dagger -m $(GIT_MODULE) call --progress=plain --source=. \
+		with-https-token-auth \
+			--host='$(GIT_HOST)' \
+			--username='$(GIT_USERNAME)' \
+			--token=env://$(GIT_TOKEN_ENV) \
+		ensure-pushed-tag --tag="$$tag"
 
 publish-dry-run: check-image-component
 	$(DAGGER_ENV) dagger -m $(CONTAINER_IMAGES_SCENARIO) call --progress=plain publish-bake-target \
