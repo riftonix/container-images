@@ -9,9 +9,13 @@ design explanations so each page has one clear purpose.
    image sources and Bake manifests live.
 2. Read [Verify and dry-run publish an image](how-to/verify-and-dry-run-publish.md)
    before publishing image changes.
-3. Read [Dependency updates](reference/dependency-updates.md) when adding or
+3. Read the per-image reference pages
+   ([hugo-autoprefixer](reference/hugo-autoprefixer.md),
+   [py-astral-stack](reference/py-astral-stack.md)) for build arguments,
+   publish tags, and Renovate metadata.
+4. Read [Dependency updates](reference/dependency-updates.md) when adding or
    auditing operational version pins.
-4. Read [Dependency update design](explanation/dependency-updates.md) when you
+5. Read [Dependency update design](explanation/dependency-updates.md) when you
    need the reasoning behind Renovate metadata and classification labels.
 
 ## Documentation Structure

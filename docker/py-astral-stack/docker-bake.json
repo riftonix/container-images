@@ -1,0 +1,52 @@
+{
+  "variable": {
+    "REGISTRY": {
+      "default": "ghcr.io"
+    },
+    "REPOSITORY_PREFIX": {
+      "default": "riftonix/container-images"
+    },
+    "UV_VERSION": {
+      "default": "0.11.25",
+      "description": "renovate: datasource=docker depName=astral/uv extractVersion=^(?<version>[0-9]+\\.[0-9]+\\.[0-9]+)$"
+    },
+    "PYTHON_VERSION": {
+      "default": "3.14",
+      "description": "renovate: datasource=docker depName=astral/uv extractVersion=^[0-9]+\\.[0-9]+\\.[0-9]+-python(?P<version>[0-9]+\\.[0-9]+)-alpine$"
+    },
+    "RUFF_VERSION": {
+      "default": "0.15.20",
+      "description": "renovate: datasource=pypi depName=ruff"
+    },
+    "TY_VERSION": {
+      "default": "0.0.56",
+      "description": "renovate: datasource=pypi depName=ty"
+    }
+  },
+  "target": {
+    "py-astral-stack": {
+      "context": "docker/py-astral-stack",
+      "dockerfile": "Dockerfile",
+      "args": {
+        "UV_VERSION": "${UV_VERSION}",
+        "PYTHON_VERSION": "${PYTHON_VERSION}",
+        "RUFF_VERSION": "${RUFF_VERSION}",
+        "TY_VERSION": "${TY_VERSION}"
+      },
+      "tags": [
+        "${REGISTRY}/${REPOSITORY_PREFIX}/py-astral-stack:py${PYTHON_VERSION}-uv${UV_VERSION}-ruff${RUFF_VERSION}-ty${TY_VERSION}"
+      ],
+      "labels": {
+        "org.opencontainers.image.title": "py-astral-stack",
+        "org.opencontainers.image.version": "py${PYTHON_VERSION}-uv${UV_VERSION}-ruff${RUFF_VERSION}-ty${TY_VERSION}",
+        "org.opencontainers.image.source": "https://github.com/riftonix/container-images",
+        "org.opencontainers.image.base.name": "astral/uv:${UV_VERSION}-python${PYTHON_VERSION}-alpine",
+        "io.riftonix.container-images.uv.version": "${UV_VERSION}",
+        "io.riftonix.container-images.python.version": "${PYTHON_VERSION}",
+        "io.riftonix.container-images.ruff.version": "${RUFF_VERSION}",
+        "io.riftonix.container-images.ty.version": "${TY_VERSION}"
+      },
+      "platforms": ["linux/amd64", "linux/arm64"]
+    }
+  }
+}
