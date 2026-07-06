@@ -4,7 +4,10 @@
 .
 ├── .github/workflows/
 ├── docker/
-│   └── <image>/
+│   ├── hugo-autoprefixer/
+│   │   ├── Dockerfile
+│   │   └── docker-bake.json
+│   └── py-astral-stack/
 │       ├── Dockerfile
 │       └── docker-bake.json
 ├── docs/
