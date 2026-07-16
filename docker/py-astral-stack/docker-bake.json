@@ -15,7 +15,7 @@
       "description": "renovate: datasource=docker depName=astral/uv extractVersion=^[0-9]+\\.[0-9]+\\.[0-9]+-python(?P<version>[0-9]+\\.[0-9]+)-alpine$"
     },
     "RUFF_VERSION": {
-      "default": "0.15.20",
+      "default": "0.15.21",
       "description": "renovate: datasource=pypi depName=ruff"
     },
     "TY_VERSION": {
