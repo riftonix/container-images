@@ -6,7 +6,7 @@ COMMAND_ARGS := $(filter-out $(COMMAND_TARGETS),$(MAKECMDGOALS))
 SELECTED_COMPONENT := $(firstword $(COMMAND_ARGS))
 
 DAGGER_ENV ?= DAGGER_NO_NAG=1 DO_NOT_TRACK=1 DAGGER_NO_UPDATE_CHECK=1
-GIT_MODULE ?= github.com/riftonix/daggerverse/modules/git@modules/git/v1.0.1
+GIT_MODULE ?= github.com/riftonix/daggerverse/modules/git@modules/git/v1.0.2
 CONTAINER_IMAGES_SCENARIO ?= github.com/riftonix/daggerverse/scenarios/container-images@scenarios/container-images/v0.1.2
 BASE_REF ?= origin/master
 HEAD_REF ?= HEAD
