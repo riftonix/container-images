@@ -22,6 +22,17 @@ renovate: datasource=<datasource> depName=<dependency> [versioning=<scheme>] [ex
 Renovate updates the variable `default` value. Docker Bake then propagates that
 value into build arguments, labels, and publish tags.
 
+The `lvm` image uses two annotated variables:
+
+| Variable | Managed value | Tag behavior |
+| --- | --- | --- |
+| `WOLFI_BASE_DIGEST` | Wolfi multi-platform base digest | Does not affect the image tag |
+| `LVM_PACKAGE_VERSION` | Exact Wolfi `lvm2` package version | Used as the complete image tag |
+
+The Wolfi package variable uses the repository's `custom.wolfi` datasource and
+`loose` versioning so package revisions such as `-r1` remain part of the
+managed version.
+
 ## Intentionally Unmanaged Values
 
 The following committed values are configuration rather than dependency pins:
