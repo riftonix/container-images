@@ -7,6 +7,9 @@
 │   ├── hugo-autoprefixer/
 │   │   ├── Dockerfile
 │   │   └── docker-bake.json
+│   ├── lvm/
+│   │   ├── Dockerfile
+│   │   └── docker-bake.json
 │   └── py-astral-stack/
 │       ├── Dockerfile
 │       └── docker-bake.json

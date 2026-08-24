@@ -1,0 +1,40 @@
+{
+  "variable": {
+    "REGISTRY": {
+      "default": "ghcr.io"
+    },
+    "REPOSITORY_PREFIX": {
+      "default": "riftonix/container-images"
+    },
+    "WOLFI_BASE_DIGEST": {
+      "default": "sha256:a31344ab2cb8618db84f535eec56f76f6178b142cb92cb2e48676cc2dcebea72",
+      "description": "renovate: datasource=docker depName=chainguard/wolfi-base versioning=docker"
+    },
+    "LVM_PACKAGE_VERSION": {
+      "default": "2.03.42-r1",
+      "description": "renovate: datasource=custom.wolfi depName=lvm2 versioning=loose"
+    }
+  },
+  "target": {
+    "lvm": {
+      "context": "docker/lvm",
+      "dockerfile": "Dockerfile",
+      "args": {
+        "WOLFI_BASE_DIGEST": "${WOLFI_BASE_DIGEST}",
+        "LVM_PACKAGE_VERSION": "${LVM_PACKAGE_VERSION}"
+      },
+      "tags": [
+        "${REGISTRY}/${REPOSITORY_PREFIX}/lvm:${LVM_PACKAGE_VERSION}"
+      ],
+      "labels": {
+        "org.opencontainers.image.title": "lvm",
+        "org.opencontainers.image.version": "${LVM_PACKAGE_VERSION}",
+        "org.opencontainers.image.source": "https://github.com/riftonix/container-images",
+        "org.opencontainers.image.base.name": "docker.io/chainguard/wolfi-base@${WOLFI_BASE_DIGEST}",
+        "io.riftonix.container-images.lvm.version": "${LVM_PACKAGE_VERSION}",
+        "io.riftonix.container-images.lvm.package.version": "${LVM_PACKAGE_VERSION}"
+      },
+      "platforms": ["linux/amd64", "linux/arm64"]
+    }
+  }
+}
