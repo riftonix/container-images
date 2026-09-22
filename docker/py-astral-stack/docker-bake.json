@@ -19,7 +19,7 @@
       "description": "renovate: datasource=pypi depName=ruff"
     },
     "TY_VERSION": {
-      "default": "0.0.82",
+      "default": "0.0.83",
       "description": "renovate: datasource=pypi depName=ty"
     }
   },
