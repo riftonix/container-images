@@ -9,3 +9,4 @@ Available reference pages:
 - [hugo-autoprefixer](hugo-autoprefixer.md)
 - [lvm](lvm.md)
 - [py-astral-stack](py-astral-stack.md)
+- [updatecli-python-nodejs](updatecli-python-nodejs.md)

@@ -35,6 +35,12 @@ Bundles Python with the Astral toolchain: `uv`, `ruff`, and `ty`. Use it for
 Python dependency management, linting, formatting, and type checking without
 installing those tools at runtime.
 
+### [updatecli-python-nodejs](reference/updatecli-python-nodejs.md)
+
+Bundles Updatecli with Python, PyYAML, Node.js, npm, and git. Use it to run
+Updatecli pipelines whose shell resources call Python scripts, `npx`-based
+generators, or git.
+
 ## Documentation Structure
 
 - [Tutorials](tutorials/README.md) teach by walking through complete examples.

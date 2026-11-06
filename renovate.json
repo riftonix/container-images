@@ -49,7 +49,7 @@
   ],
   "packageRules": [
     {
-      "matchFileNames": ["docker/**/docker-bake.json"],
+      "matchFileNames": ["docker/**/docker-bake.json", "docker/**/Dockerfile"],
       "labels": ["image-dependencies"]
     }
   ]
