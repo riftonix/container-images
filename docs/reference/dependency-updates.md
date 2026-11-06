@@ -12,6 +12,7 @@ update scope.
 | `.github/workflows/*.yaml` `DAGGER_VERSION` | Dagger CLI | Regex manager backed by the Manjaro stable extra mirror |
 | `Makefile` daggerverse refs | Released Dagger modules and scenarios | Regex manager backed by GitHub tags |
 | `docker/**/docker-bake.json` annotated variables | Image-specific dependencies | Regex manager using `description` metadata |
+| `docker/**/Dockerfile` literal `FROM` references with a digest | Base image digests | Built-in `dockerfile` manager |
 
 Docker Bake dependencies opt in through a standard variable description:
 
@@ -42,9 +43,10 @@ The following committed values are configuration rather than dependency pins:
 | `docker/**/docker-bake.json` | `REGISTRY` | Runtime publication destination |
 | `docker/**/docker-bake.json` | `REPOSITORY_PREFIX` | Runtime repository namespace |
 | `docker/**/docker-bake.json` | `platforms` entries | Target architectures, not dependency versions |
+| `docker/updatecli-python-nodejs/docker-bake.json` | `PYTHON_VERSION`, `NODE_VERSION` | Base image line selection, kept in sync with the `Dockerfile` `FROM` tag and checked at build time |
 | `openspec/**` | Example version strings | Design examples, not operational configuration |
 
 ## Classification
 
-Renovate labels updates originating from `docker/**/docker-bake.json` with
-`image-dependencies`. Updates for independent images remain ungrouped.
+Renovate labels updates originating from `docker/**/docker-bake.json` and
+`docker/**/Dockerfile` with `image-dependencies`. Updates for independent images remain ungrouped.

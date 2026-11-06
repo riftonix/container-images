@@ -10,7 +10,10 @@
 │   ├── lvm/
 │   │   ├── Dockerfile
 │   │   └── docker-bake.json
-│   └── py-astral-stack/
+│   ├── py-astral-stack/
+│   │   ├── Dockerfile
+│   │   └── docker-bake.json
+│   └── updatecli-python-nodejs/
 │       ├── Dockerfile
 │       └── docker-bake.json
 ├── docs/

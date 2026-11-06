@@ -1,0 +1,50 @@
+{
+  "variable": {
+    "REGISTRY": {
+      "default": "ghcr.io"
+    },
+    "REPOSITORY_PREFIX": {
+      "default": "riftonix/container-images"
+    },
+    "PYTHON_VERSION": {
+      "default": "3.14"
+    },
+    "NODE_VERSION": {
+      "default": "26"
+    },
+    "UPDATECLI_VERSION": {
+      "default": "0.123.0",
+      "description": "renovate: datasource=docker depName=ghcr.io/updatecli/updatecli extractVersion=^v(?<version>[0-9.]+)$"
+    },
+    "PYYAML_VERSION": {
+      "default": "6.0.3",
+      "description": "renovate: datasource=pypi depName=PyYAML"
+    }
+  },
+  "target": {
+    "updatecli-python-nodejs": {
+      "context": "docker/updatecli-python-nodejs",
+      "dockerfile": "Dockerfile",
+      "args": {
+        "PYTHON_VERSION": "${PYTHON_VERSION}",
+        "NODE_VERSION": "${NODE_VERSION}",
+        "UPDATECLI_VERSION": "${UPDATECLI_VERSION}",
+        "PYYAML_VERSION": "${PYYAML_VERSION}"
+      },
+      "tags": [
+        "${REGISTRY}/${REPOSITORY_PREFIX}/updatecli-python-nodejs:py${PYTHON_VERSION}-node${NODE_VERSION}-updatecli${UPDATECLI_VERSION}-pyyaml${PYYAML_VERSION}"
+      ],
+      "labels": {
+        "org.opencontainers.image.title": "updatecli-python-nodejs",
+        "org.opencontainers.image.version": "py${PYTHON_VERSION}-node${NODE_VERSION}-updatecli${UPDATECLI_VERSION}-pyyaml${PYYAML_VERSION}",
+        "org.opencontainers.image.source": "https://github.com/riftonix/container-images",
+        "org.opencontainers.image.base.name": "docker.io/nikolaik/python-nodejs:python${PYTHON_VERSION}-nodejs${NODE_VERSION}",
+        "io.riftonix.container-images.python.version": "${PYTHON_VERSION}",
+        "io.riftonix.container-images.nodejs.version": "${NODE_VERSION}",
+        "io.riftonix.container-images.updatecli.version": "${UPDATECLI_VERSION}",
+        "io.riftonix.container-images.pyyaml.version": "${PYYAML_VERSION}"
+      },
+      "platforms": ["linux/amd64", "linux/arm64"]
+    }
+  }
+}
