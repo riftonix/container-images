@@ -24,16 +24,23 @@ renovate: datasource=<datasource> depName=<dependency> [versioning=<scheme>] [ex
 Renovate updates the variable `default` value. Docker Bake then propagates that
 value into build arguments, labels, and publish tags.
 
-The `lvm` image uses two annotated variables:
+The `lvm` image uses one annotated variable:
 
 | Variable | Managed value | Tag behavior |
 | --- | --- | --- |
-| `WOLFI_BASE_DIGEST` | Wolfi multi-platform base digest | Does not affect the image tag |
 | `LVM_PACKAGE_VERSION` | Exact Wolfi `lvm2` package version | Used as the complete image tag |
 
-The Wolfi package variable uses the repository's `custom.wolfi` datasource and
-`loose` versioning so package revisions such as `-r1` remain part of the
-managed version.
+Its Wolfi base digest is pinned in the `Dockerfile` `FROM` line, is updated by
+the `dockerfile` manager, and does not affect the image tag.
+
+The Wolfi package variable uses the `custom.wolfi` datasource defined in
+`renovate.json` and `loose` versioning. The datasource reads the package
+definition `https://raw.githubusercontent.com/wolfi-dev/os/main/<package>.yaml`
+and reports its `version` and `epoch` as one release, for example
+`2.03.44-r1`, so the package revision remains part of the managed version.
+Only the latest definition is visible. A version that is already defined but
+not yet published to the Wolfi repository fails the `apk add` step in CI until
+the package is available.
 
 The `ngate-client` tag `<ngate-version>-<build>-g<commit>-csp<csp-version>`
 does not fit `docker` versioning, which treats everything after the first `-`
@@ -53,6 +60,10 @@ The following committed values are configuration rather than dependency pins:
 | `docker/updatecli-python-nodejs/docker-bake.json` | `PYTHON_VERSION`, `NODE_VERSION` | Base image line selection, kept in sync with the `Dockerfile` `FROM` tag and checked at build time |
 | `docker/ngate-client/docker-bake.json` | `CSP_VERSION`, `NGATE_VERSION`, `NGATE_TUN_SHA256`, `NGATE_CONSOLE_SHA256` | Vendor packages come from an authenticated repository and a flat repository without release metadata, which Renovate cannot query; update the version and both checksums together by hand |
 | `openspec/**` | Example version strings | Design examples, not operational configuration |
+
+Publication skips images whose Git release tag already exists. An update that
+does not change the image tag, such as a new base image digest, is verified by
+CI but published only together with the next change of the image tag.
 
 ## Classification
 

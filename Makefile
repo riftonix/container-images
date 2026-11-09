@@ -25,7 +25,7 @@ help:
 		'Targets:' \
 		'  make changed-components [BASE_REF=<ref>] [HEAD_REF=<ref>] [SHARED_PATHS="<path> ..."]' \
 		'  make verify docker/<image>           Build and verify one Bake image target' \
-		'  make publish docker/<image>          Publish one Bake image target and push its release tag' \
+		'  make publish docker/<image>          Publish one Bake image target and push its release tag, unless the tag exists' \
 		'  make publish-dry-run docker/<image>  Build and validate publication without pushing'
 
 check-image-component:
@@ -66,6 +66,23 @@ check-publish-input:
 	fi
 
 publish: check-image-component check-publish-input
+	set -e
+	tag=$$($(DAGGER_ENV) dagger -m $(CONTAINER_IMAGES_SCENARIO) call --progress=plain \
+		get-bake-release-tag \
+			--source=. \
+			--bake-path='$(SELECTED_COMPONENT)/docker-bake.json' \
+			--component-path='$(SELECTED_COMPONENT)')
+	exists=$$($(DAGGER_ENV) dagger -m $(GIT_MODULE) call --progress=plain --source=. \
+		with-https-token-auth \
+			--host='$(GIT_HOST)' \
+			--username='$(GIT_USERNAME)' \
+			--token=env://$(GIT_TOKEN_ENV) \
+		with-fetched-tags \
+		has-tag --tag="$$tag")
+	if [ "$$exists" = true ]; then
+		printf 'Release tag %s already exists, skipping publication\n' "$$tag"
+		exit 0
+	fi
 	$(DAGGER_ENV) dagger -m $(CONTAINER_IMAGES_SCENARIO) call --progress=plain \
 		with-registry-auth \
 			--address='$(REGISTRY_ADDRESS)' \
@@ -74,11 +91,6 @@ publish: check-image-component check-publish-input
 		publish-bake-target \
 			--source=. \
 			--bake-path='$(SELECTED_COMPONENT)/docker-bake.json'
-	tag=$$($(DAGGER_ENV) dagger -m $(CONTAINER_IMAGES_SCENARIO) call --progress=plain \
-		get-bake-release-tag \
-			--source=. \
-			--bake-path='$(SELECTED_COMPONENT)/docker-bake.json' \
-			--component-path='$(SELECTED_COMPONENT)')
 	$(DAGGER_ENV) dagger -m $(GIT_MODULE) call --progress=plain --source=. \
 		with-https-token-auth \
 			--host='$(GIT_HOST)' \

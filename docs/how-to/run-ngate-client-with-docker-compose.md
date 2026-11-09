@@ -3,8 +3,8 @@
 Use [`ngate-client/docker-compose.yaml`](ngate-client/docker-compose.yaml) to
 connect to a CryptoPro NGate gateway without typing the full `docker run`
 command. The file runs the published
-[ngate-client](../reference/ngate-client.md) image with the same host
-requirements: rootful Docker, NetworkManager on the host, host networking,
+[ngate-client](../reference/ngate-client.md) image in the default
+`networkmanager` mode, with the same host requirements: rootful Docker, NetworkManager on the host, host networking,
 `CAP_NET_ADMIN`, `/dev/net/tun`, and the host system D-Bus socket.
 
 1. Copy the file into a local directory outside the repository, so filled-in

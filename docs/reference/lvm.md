@@ -5,7 +5,7 @@ The image installs the exact Wolfi `lvm2` package selected by the Bake manifest
 and does not perform storage changes automatically.
 
 - Location: `docker/lvm/`
-- Base image: `docker.io/chainguard/wolfi-base@${WOLFI_BASE_DIGEST}`
+- Base image: `docker.io/chainguard/wolfi-base:latest@<digest>`
 - Publish tag: `${REGISTRY}/${REPOSITORY_PREFIX}/lvm:${LVM_PACKAGE_VERSION}`
 - Default command: `sleep infinity`
 - Platforms: `linux/amd64`, `linux/arm64`
@@ -18,7 +18,6 @@ image tag so the tag identifies the exact installed Wolfi package.
 
 | Argument | Bake variable | Purpose |
 | --- | --- | --- |
-| `WOLFI_BASE_DIGEST` | `WOLFI_BASE_DIGEST` | Multi-platform OCI index digest for the Wolfi base image |
 | `LVM_PACKAGE_VERSION` | `LVM_PACKAGE_VERSION` | Exact Wolfi `lvm2` package version used by `apk add` and the image tag |
 
 The `lvm2` package supplies `lvm`, `pvcreate`, `vgcreate`, `vgs`, the default
@@ -98,11 +97,13 @@ device access.
 
 ## Renovate Metadata
 
-Both Bake variables carry Renovate annotations in their `description` fields.
+The base image is pinned by tag and multi-platform OCI index digest in the
+`Dockerfile` `FROM` line, and the built-in `dockerfile` manager updates the
+digest. The package version carries a Renovate annotation in its Bake
+`description` field:
 
 | Variable | Datasource | Dependency | Versioning |
 | --- | --- | --- | --- |
-| `WOLFI_BASE_DIGEST` | `docker` | `chainguard/wolfi-base` | `docker` |
 | `LVM_PACKAGE_VERSION` | `custom.wolfi` | `lvm2` | `loose` |
 
 See [Dependency updates](dependency-updates.md) for the shared annotation
