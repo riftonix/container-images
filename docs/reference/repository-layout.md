@@ -10,6 +10,12 @@
 │   ├── lvm/
 │   │   ├── Dockerfile
 │   │   └── docker-bake.json
+│   ├── ngate-client/
+│   │   ├── Dockerfile
+│   │   ├── connect.exp
+│   │   ├── cryptopro-package-signing-key.asc
+│   │   ├── docker-bake.json
+│   │   └── entrypoint.sh
 │   ├── py-astral-stack/
 │   │   ├── Dockerfile
 │   │   └── docker-bake.json
@@ -31,7 +37,8 @@
 
 Each child directory is an independently versioned OCI image. Its
 `docker-bake.json` file defines build arguments, labels, platforms, and publish
-tags.
+tags. An image directory may also hold files copied into the image, such as
+entrypoint scripts or signing keys.
 
 ## `.github/workflows/`
 

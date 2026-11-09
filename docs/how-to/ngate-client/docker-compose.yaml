@@ -1,0 +1,34 @@
+# Copy this file out of the repository, fill in the environment, put root
+# certificates into ./ca next to it, and run `docker compose up`.
+name: ngate-client
+
+services:
+  ngate-client:
+    image: ghcr.io/riftonix/container-images/ngate-client:1.0.30-213-g9526b28-csp5.0.13000-7
+    container_name: ngate-client
+    restart: "no"
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun
+    security_opt:
+      - apparmor=unconfined
+    volumes:
+      - type: bind
+        source: /run/dbus/system_bus_socket
+        target: /run/dbus/system_bus_socket
+        read_only: true
+      - ./ca:/etc/ngate-client/ca.d:ro
+    environment:
+      # cryptopro.ru account. Needed to download CryptoPro CSP when the container
+      # is created; not used for the VPN login.
+      CRYPTOPRO_USERNAME: ""
+      CRYPTOPRO_PASSWORD: ""
+      # CSP license serial number. Leave empty to use the trial license.
+      CSP_LICENSE: ""
+      NGATE_URL: "https://example.gost-vpn.ru"
+      NGATE_USERNAME: ""
+      NGATE_PASSWORD: ""
+      # Confirmation method number, only when the gateway asks to choose one.
+      NGATE_OTP: ""

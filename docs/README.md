@@ -29,6 +29,13 @@ Provides versioned LVM2 tools for privileged block-device administration. It
 supports Kubernetes storage initialization workloads and remains running with
 `sleep infinity` unless its command is overridden.
 
+### [ngate-client](reference/ngate-client.md)
+
+Connects a Linux host to a CryptoPro NGate VPN gateway with the vendor console
+client. The NGate client is part of the image, CryptoPro CSP is installed on
+the first container start, and credentials and the CSP license are passed
+at runtime.
+
 ### [py-astral-stack](reference/py-astral-stack.md)
 
 Bundles Python with the Astral toolchain: `uv`, `ruff`, and `ty`. Use it for

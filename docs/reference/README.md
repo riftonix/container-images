@@ -8,5 +8,6 @@ Available reference pages:
 - [Dependency updates](dependency-updates.md)
 - [hugo-autoprefixer](hugo-autoprefixer.md)
 - [lvm](lvm.md)
+- [ngate-client](ngate-client.md)
 - [py-astral-stack](py-astral-stack.md)
 - [updatecli-python-nodejs](updatecli-python-nodejs.md)
