@@ -1,0 +1,50 @@
+{
+  "variable": {
+    "REGISTRY": {
+      "default": "ghcr.io"
+    },
+    "REPOSITORY_PREFIX": {
+      "default": "riftonix/container-images"
+    },
+    "CSP_VERSION": {
+      "default": "5.0.13000-7",
+      "description": "CryptoPro CSP package version installed at container start from the authenticated cryptopro.ru repository"
+    },
+    "NGATE_VERSION": {
+      "default": "1.0.30-213-g9526b28",
+      "description": "CryptoPro NGate cprongate-tun and cprongate-console package version extracted into the image at build time"
+    },
+    "NGATE_TUN_SHA256": {
+      "default": "097aeb72975ed70cbe7821fc2b46f885ec8ea6996497f8b519dcd436e164b9f0",
+      "description": "SHA256 of the cprongate-tun amd64 package for NGATE_VERSION"
+    },
+    "NGATE_CONSOLE_SHA256": {
+      "default": "a96836a41c1b9cff6af48efd57ac28ecf0a4c3525954d394bcb8012a488fd21c",
+      "description": "SHA256 of the cprongate-console amd64 package for NGATE_VERSION"
+    }
+  },
+  "target": {
+    "ngate-client": {
+      "context": "docker/ngate-client",
+      "dockerfile": "Dockerfile",
+      "args": {
+        "CSP_VERSION": "${CSP_VERSION}",
+        "NGATE_VERSION": "${NGATE_VERSION}",
+        "NGATE_TUN_SHA256": "${NGATE_TUN_SHA256}",
+        "NGATE_CONSOLE_SHA256": "${NGATE_CONSOLE_SHA256}"
+      },
+      "tags": [
+        "${REGISTRY}/${REPOSITORY_PREFIX}/ngate-client:${NGATE_VERSION}-csp${CSP_VERSION}"
+      ],
+      "labels": {
+        "org.opencontainers.image.title": "ngate-client",
+        "org.opencontainers.image.version": "${NGATE_VERSION}-csp${CSP_VERSION}",
+        "org.opencontainers.image.source": "https://github.com/riftonix/container-images",
+        "org.opencontainers.image.base.name": "docker.io/library/ubuntu:24.04",
+        "io.riftonix.container-images.ngate.version": "${NGATE_VERSION}",
+        "io.riftonix.container-images.csp.version": "${CSP_VERSION}"
+      },
+      "platforms": ["linux/amd64"]
+    }
+  }
+}

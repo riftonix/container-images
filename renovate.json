@@ -51,6 +51,12 @@
     {
       "matchFileNames": ["docker/**/docker-bake.json", "docker/**/Dockerfile"],
       "labels": ["image-dependencies"]
+    },
+    {
+      "description": "Order ngate-client tags by NGate version and then by CSP build",
+      "matchManagers": ["docker-compose"],
+      "matchDepNames": ["ghcr.io/riftonix/container-images/ngate-client"],
+      "versioning": "regex:^(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)-(?<build>\\d+)-g[0-9a-f]+-csp\\d+\\.\\d+\\.(?<revision>\\d+)-\\d+$"
     }
   ]
 }

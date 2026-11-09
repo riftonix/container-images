@@ -1,0 +1,81 @@
+#!/usr/bin/expect -f
+# Runs ngateconsoleclient and answers its login prompts from the environment
+# prepared by ngate-client-entrypoint. Script arguments are passed to the
+# client. The script exits with the client status.
+
+set timeout -1
+
+set url $env(NGATE_URL)
+set username $env(NGATE_USERNAME)
+set password $env(NGATE_PASSWORD)
+set otp ""
+if {[info exists env(NGATE_OTP)]} {
+    set otp $env(NGATE_OTP)
+}
+# Keep the secrets out of the client environment.
+foreach name {NGATE_URL NGATE_USERNAME NGATE_PASSWORD NGATE_OTP} {
+    unset -nocomplain env($name)
+}
+
+set client_pid 0
+array set tries {password 0 otp 0}
+
+proc fail {message} {
+    global client_pid
+    puts stderr "\nngate-client: error: $message"
+    if {$client_pid > 0} {
+        catch {exec kill -TERM $client_pid}
+    }
+    exit 1
+}
+
+# Wrong credentials must not be retried until the account is locked.
+proc answer {kind value} {
+    global tries
+    if {[incr tries($kind)] > 3} {
+        fail "$kind was requested 3 times in a row, giving up"
+    }
+    send -- "$value\r"
+}
+
+spawn -noecho /opt/cprongate/ngateconsoleclient -K -v {*}$argv $url
+set client_pid [exp_pid]
+# Answers are sent through the pty, so keep them out of the container log.
+stty -echo < $spawn_out(slave,name)
+
+trap {
+    catch {exec kill -TERM $client_pid}
+} {SIGTERM SIGINT}
+
+expect {
+    -re {Please enter username for authentication:} {
+        send -- "$username\r"
+        exp_continue
+    }
+    -re {Please enter password for authentication:} {
+        answer password $password
+        exp_continue
+    }
+    -re {Please enter (OTP PIN|current password|a new password|PIN code)} {
+        fail "unsupported login prompt: $expect_out(0,string)"
+    }
+    -re {Please enter OTP (for authentication:|\([^)]*\))|OTP (code )?can't be empty\. Try again:} {
+        if {$otp eq ""} {
+            fail "the gateway requested an OTP, but NGATE_OTP is not set"
+        }
+        answer otp $otp
+        exp_continue
+    }
+    -re {Please enter 'Yes'[^:]*:} {
+        send -- "\r"
+        exp_continue
+    }
+    -re {VPN session online} {
+        array set tries {password 0 otp 0}
+        exp_continue
+    }
+    eof
+}
+
+lassign [wait] pid wait_spawn_id os_error status
+exit $status
