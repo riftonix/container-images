@@ -171,12 +171,17 @@ The repository SHALL describe the `lvm` image with a local Docker Bake target co
 
 ### Requirement: LVM image dependency pins are managed
 
-The LVM image Bake manifest SHALL define `WOLFI_BASE_DIGEST` and `LVM_PACKAGE_VERSION` variables, and each managed variable SHALL expose Renovate metadata through its `description` field.
+The LVM image SHALL pin its Wolfi base image by tag and digest in the base image reference of `docker/lvm/Dockerfile`. The LVM image Bake manifest SHALL define the exact Wolfi `lvm2` package version, including its apk revision, in the `LVM_PACKAGE_VERSION` variable, and that variable SHALL expose Renovate metadata through its `description` field. The LVM image Bake manifest SHALL NOT define a variable for the base image digest.
 
 #### Scenario: A supported LVM dependency update is available
 
-- **WHEN** Renovate detects a newer supported base digest or exact Wolfi package version
-- **THEN** it proposes an update to the matching variable in `docker/lvm/docker-bake.json`
+- **WHEN** Wolfi defines a newer `lvm2` package version or revision than `LVM_PACKAGE_VERSION`
+- **THEN** Renovate proposes an update to `LVM_PACKAGE_VERSION` in `docker/lvm/docker-bake.json` that includes the apk revision
+
+#### Scenario: A newer base image digest is available
+
+- **WHEN** the pinned Wolfi base image tag resolves to a newer digest
+- **THEN** Renovate proposes an update to the digest in the base image reference of `docker/lvm/Dockerfile`
 
 #### Scenario: Non-version inputs change
 
