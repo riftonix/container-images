@@ -7,7 +7,7 @@
 
 - [x] 2.1 Replace the `WOLFI_BASE_DIGEST` build argument in `docker/lvm/Dockerfile` with `FROM docker.io/chainguard/wolfi-base:latest@<current digest>`, and verify that the digest equals the previous `WOLFI_BASE_DIGEST` default and no `ARG WOLFI_BASE_DIGEST` remains.
 - [x] 2.2 Remove the `WOLFI_BASE_DIGEST` variable and build argument from `docker/lvm/docker-bake.json` and set `org.opencontainers.image.base.name` to `docker.io/chainguard/wolfi-base:latest`, and verify with `docker buildx bake -f docker/lvm/docker-bake.json lvm --print` that the tag is still `lvm:2.03.42-r1` and no `WOLFI_BASE_DIGEST` argument is rendered.
-- [ ] 2.3 Provide `make verify docker/lvm` as a user-run command and record its result before merge.
+- [x] 2.3 Provide `make verify docker/lvm` as a user-run command and record its result before merge. Passed in [PR #101 CI](https://github.com/riftonix/container-images/actions/runs/42786154837/job/129728171317); the local attempt could not run because Dagger was not installed.
 
 ## 3. Documentation
 
@@ -17,4 +17,4 @@
 ## 4. Validation
 
 - [x] 4.1 Run `openspec validate fix-lvm-dependency-pin-updates --strict` and verify that it passes.
-- [ ] 4.2 After merge, verify that the Dependency Dashboard lists `lvm2` from `docker/lvm/docker-bake.json` and `docker.io/chainguard/wolfi-base` from `docker/lvm/Dockerfile`, and that Renovate proposes an `lvm2` update.
+- [x] 4.2 After merge, verify that the Dependency Dashboard lists `lvm2` from `docker/lvm/docker-bake.json` and `docker.io/chainguard/wolfi-base` from `docker/lvm/Dockerfile`, and that Renovate proposes an `lvm2` update. Confirmed on 2026-11-10 in the [Dependency Dashboard](https://github.com/riftonix/container-images/issues/9), [base digest PR #102](https://github.com/riftonix/container-images/pull/102), and [lvm2 update PR #103](https://github.com/riftonix/container-images/pull/103).
