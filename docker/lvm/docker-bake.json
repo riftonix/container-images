@@ -7,7 +7,7 @@
       "default": "riftonix/container-images"
     },
     "LVM_PACKAGE_VERSION": {
-      "default": "2.03.42-r1",
+      "default": "2.03.44-r1",
       "description": "renovate: datasource=custom.wolfi depName=lvm2 versioning=loose"
     }
   },
