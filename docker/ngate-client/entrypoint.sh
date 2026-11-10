@@ -4,6 +4,7 @@
 # connection over to connect.exp. Arguments are passed to ngateconsoleclient.
 set -euo pipefail
 
+NGATE_MODE="${NGATE_MODE:-networkmanager}"
 CSP_REPO_URL="${CSP_REPO_URL:-https://cryptopro.ru/repo/deb}"
 CSP_REPO_SUITE="${CSP_REPO_SUITE:-5.0-unstable}"
 CSP_PACKAGES=(lsb-cprocsp-base lsb-cprocsp-rdr-64 lsb-cprocsp-kc1-64 lsb-cprocsp-capilite-64)
@@ -17,6 +18,7 @@ LOADER=/lib64/ld-linux-x86-64.so.2
 CPCONFIG=/opt/cprocsp/sbin/amd64/cpconfig
 CERTMGR=/opt/cprocsp/bin/amd64/certmgr
 NGATETUN_SOCKET=/tmp/ngatetuncmdint
+NGATETUN_CONFIG=/opt/cprongate/service.ini
 
 log() {
   printf 'ngate-client: %s\n' "$*" >&2
@@ -85,6 +87,60 @@ install_root_certificates() {
   done
 }
 
+# Lets other hosts route traffic into the tunnel through this container.
+# Forwarding is limited to tun0, so addresses the gateway does not route are
+# rejected instead of looping back to the host that sent them.
+enable_nat() {
+  local ipt
+
+  if [ "$(cat /proc/sys/net/ipv4/ip_forward)" != 1 ]; then
+    echo 1 2> /dev/null > /proc/sys/net/ipv4/ip_forward \
+      || die "cannot enable IP forwarding, run the container with --sysctl net.ipv4.ip_forward=1"
+  fi
+  # The kernel may support only one of the iptables backends.
+  for ipt in iptables iptables-legacy; do
+    "$ipt" -t nat -S > /dev/null 2>&1 || continue
+    add_rule "$ipt" nat POSTROUTING -o tun0 -j MASQUERADE
+    add_rule "$ipt" mangle FORWARD -o tun0 -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu
+    add_rule "$ipt" filter FORWARD -o tun0 -j ACCEPT
+    add_rule "$ipt" filter FORWARD -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+    add_rule "$ipt" filter FORWARD -j REJECT
+    log "forwarding traffic into tun0 with $ipt"
+    return
+  done
+  die "neither iptables nor iptables-legacy can manage the nat table"
+}
+
+# Appends an iptables rule unless it is already present.
+add_rule() {
+  local ipt="$1" table="$2" chain="$3"
+  shift 3
+  "$ipt" -t "$table" -C "$chain" "$@" 2> /dev/null || "$ipt" -t "$table" -A "$chain" "$@"
+}
+
+# networkmanager: the container uses the host network, and ngatetun configures
+# routes and DNS through the host NetworkManager.
+# gateway: the container has its own network, ngatetun configures routes with
+# ip and passes DNS to resolvconf, and other hosts reach the tunnel through NAT.
+configure_mode() {
+  case "$NGATE_MODE" in
+    networkmanager)
+      [ -S /run/dbus/system_bus_socket ] \
+        || die "host D-Bus socket is missing, mount /run/dbus/system_bus_socket into the container"
+      nmcli --wait 5 --terse --fields RUNNING general > /dev/null \
+        || die "cannot reach the host NetworkManager through the system D-Bus socket"
+      rm -f "$NGATETUN_CONFIG"
+      ;;
+    gateway)
+      printf 'ignoreNetworkManager=1\n' > "$NGATETUN_CONFIG"
+      enable_nat
+      ;;
+    *)
+      die "NGATE_MODE must be networkmanager or gateway"
+      ;;
+  esac
+}
+
 start_ngatetun() {
   local i
   # Files left by the previous run of a restarted container block the start.
@@ -98,8 +154,7 @@ start_ngatetun() {
 }
 
 [ -c /dev/net/tun ] || die "/dev/net/tun is missing, run the container with --device /dev/net/tun"
-[ -S /run/dbus/system_bus_socket ] \
-  || die "host D-Bus socket is missing, mount /run/dbus/system_bus_socket into the container"
+configure_mode
 for name in NGATE_URL NGATE_USERNAME NGATE_PASSWORD; do
   [ -n "${!name:-}" ] || die "$name is required"
 done

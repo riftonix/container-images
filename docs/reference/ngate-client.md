@@ -1,8 +1,9 @@
 # ngate-client
 
-OCI image that connects a Linux host to a CryptoPro NGate VPN gateway through
-the vendor console client `ngateconsoleclient`. The NGate client is part of
-the image. CryptoPro CSP is distributed only through an authenticated
+OCI image that connects to a CryptoPro NGate VPN gateway through the vendor
+console client `ngateconsoleclient`. It either brings the tunnel up on a Linux
+host with NetworkManager or acts as a gateway that other hosts route traffic
+through. The NGate client is part of the image. CryptoPro CSP is distributed only through an authenticated
 repository, so the entrypoint installs it on the first container start. On
 every start the entrypoint then applies the CSP license, installs trusted root
 certificates, starts the NGate TUN helper, and logs in to the gateway.
@@ -30,12 +31,13 @@ names the NGate version inside the image and the CSP version it installs.
 container can install another CSP build by overriding it at runtime.
 
 The image adds `expect`, `tini`, `network-manager` (for `nmcli`), `iproute2`,
-`curl`, `ca-certificates`, `lsb-base`, and the `libglib2.0-0t64` and
-`libdbus-1-3` libraries the NGate binaries link against. NGate configures routes and
-DNS through `nmcli` and the host NetworkManager; `ip` is its fallback path.
-Package service startup is disabled, and no D-Bus or NetworkManager runs
-inside the container. The build fails if `ldd` reports a missing library for
-either NGate binary.
+`iptables`, `curl`, `ca-certificates`, `lsb-base`, and the `libglib2.0-0t64`
+and `libdbus-1-3` libraries the NGate binaries link against. It also ships a
+`resolvconf` script that receives the tunnel DNS settings in gateway mode; see
+[Network Modes](#network-modes). `LANG` is set to `C.UTF-8` for the Qt runtime
+of the NGate binaries. Package service startup is disabled, and no D-Bus or
+NetworkManager runs inside the container. The build fails if `ldd` reports a
+missing library for either NGate binary.
 
 ## Vendor Packages
 
@@ -69,9 +71,10 @@ container installs again. The repository credentials are written to
 installation and are removed together with the downloaded packages.
 
 The entrypoint runs CSP tools, including the calls in the capilite `postinst`
-script, through the ELF loader `/lib64/ld-linux-x86-64.so.2`. This keeps host
-AppArmor profiles attached to the CSP executable paths from applying inside
-the container. Vendor binaries are not modified.
+script, through the ELF loader `/lib64/ld-linux-x86-64.so.2`. In
+`networkmanager` mode the container runs with `apparmor=unconfined`, and this
+keeps host AppArmor profiles attached to the CSP executable paths from
+applying inside the container. Vendor binaries are not modified.
 
 ## Runtime Configuration
 
@@ -83,6 +86,7 @@ the container. Vendor binaries are not modified.
 | `NGATE_URL` | Yes | Gateway URL, for example `https://ng-av.crpt.ru` |
 | `NGATE_USERNAME`, `NGATE_PASSWORD` | Yes | Gateway login and password |
 | `NGATE_OTP` | When the gateway asks for it | Answer to the gateway OTP prompt, such as the confirmation method number |
+| `NGATE_MODE` | No | `networkmanager` (default) or `gateway`; see [Network Modes](#network-modes) |
 
 Values passed with `-e` are visible in `docker inspect`.
 
@@ -102,6 +106,55 @@ exported by its SHA1 thumbprint:
 
 Container arguments are passed to `ngateconsoleclient` before the gateway
 URL, for example `-v` for more verbose logs or `--disable-proxy`.
+
+NGate writes its own logs to `/opt/cprongate/ngate_tun_service.log` and
+`/opt/cprongate/ngate_console_client.log` inside the container. The TUN helper
+log shows which integration NGate uses, for example
+`NetworkManager support enabled` or `NetworkManager support disabled by request`.
+
+## Network Modes
+
+`NGATE_MODE` selects how the tunnel reaches the network:
+
+| Mode | Container network | Routes | DNS | Host requirements |
+| --- | --- | --- | --- | --- |
+| `networkmanager` | Host | NGate through the host NetworkManager | NGate through the host NetworkManager | NetworkManager, D-Bus socket, `apparmor=unconfined` |
+| `gateway` | Own | NGate with `ip` inside the container | Passed to `resolvconf` and recorded only | `net.ipv4.ip_forward=1`, routes to the container |
+
+In `networkmanager` mode the entrypoint checks the D-Bus socket and
+NetworkManager before installing CSP. `tun0`, the gateway routes, and the DNS
+servers and domains appear on the host and are removed when the container
+stops.
+
+In `gateway` mode the entrypoint writes `ignoreNetworkManager=1` to
+`/opt/cprongate/service.ini`, so NGate configures `tun0` and the gateway
+routes inside the container with `ip`. Before CSP is installed, the entrypoint
+enables IP forwarding and adds `iptables` rules:
+
+- `MASQUERADE` for traffic leaving through `tun0`, so the gateway sees the
+  tunnel address;
+- TCP MSS clamping for traffic entering `tun0`;
+- forwarding only into `tun0` and for established connections; other
+  forwarded traffic is rejected, so addresses the gateway does not route do
+  not loop back to the host that sent them.
+
+The rules use the nf_tables backend when the kernel supports it and
+`iptables-legacy` otherwise. Docker does not let a container change
+`ip_forward`, so pass `--sysctl net.ipv4.ip_forward=1`.
+
+NGate passes the tunnel DNS settings to `resolvconf -a tun0.ngate` and removes
+them with `resolvconf -d tun0.ngate`. The image script logs the settings and
+keeps them in `/run/ngate-client/dns` while the tunnel is up, for example:
+
+```text
+nameserver 10.77.103.241
+nameserver 10.77.103.242
+domain crpt.local
+search crpt.local . crpt.tech crpt.ru crptech.ru crpt.cloud crpt.intranet ittds.tech trekmark.ru crpt.team ~
+```
+
+The routing hosts must send the gateway networks to the container address and
+forward the gateway domains to these DNS servers themselves.
 
 ## Login Flow
 
@@ -130,6 +183,8 @@ policy such as `--restart unless-stopped` reconnects automatically, and each
 reconnect requests a new OTP confirmation.
 
 ## Running the Container
+
+### NetworkManager Mode
 
 Use rootful Docker without user namespace remapping, with NetworkManager
 running on the Linux host. The container needs `CAP_NET_ADMIN`,
@@ -174,7 +229,43 @@ After approving MFA, check the connection from the host:
 
 ```bash
 nmcli device show tun0
-getent hosts known-host.crpt.local
+resolvectl status tun0
+resolvectl query crpt.local
+```
+
+On hosts where `nsswitch.conf` sends `.local` names to mDNS
+(`mdns4_minimal [NOTFOUND=return]`), `getent` and applications do not resolve
+names under `crpt.local` even though `resolvectl query` does.
+
+### Gateway Mode
+
+The container needs `CAP_NET_ADMIN`, `/dev/net/tun`, its own network with a
+fixed address, and IP forwarding. It does not need D-Bus or
+`apparmor=unconfined`:
+
+```bash
+docker network create --subnet 172.30.0.0/24 ngate
+docker run -d --name ngate-gateway \
+  --network ngate --ip 172.30.0.2 \
+  --cap-add NET_ADMIN \
+  --device /dev/net/tun \
+  --sysctl net.ipv4.ip_forward=1 \
+  -v "$PWD/ca:/etc/ngate-client/ca.d:ro" \
+  -e NGATE_MODE=gateway \
+  -e CRYPTOPRO_USERNAME=<login> \
+  -e CRYPTOPRO_PASSWORD=<password> \
+  -e NGATE_URL=https://ng-av.crpt.ru \
+  -e NGATE_USERNAME=<login> \
+  -e NGATE_PASSWORD=<password> \
+  ghcr.io/riftonix/container-images/ngate-client:<version>
+```
+
+Hosts that use the tunnel route the gateway networks to `172.30.0.2`. The
+routes applied by NGate are visible inside the container:
+
+```bash
+docker exec ngate-gateway ip route show dev tun0
+docker exec ngate-gateway cat /run/ngate-client/dns
 ```
 
 ## Renovate Metadata

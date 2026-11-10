@@ -42,11 +42,20 @@
       "description": "Update annotated Docker Bake variables",
       "managerFilePatterns": ["/^docker/.*/docker-bake\\.json$/"],
       "matchStrings": [
-        "\"description\"\\s*:\\s*\"renovate: datasource=(?<datasource>[a-z-]+) depName=(?<depName>[^\\s\"]+)(?: versioning=(?<versioning>[^\\s\"]+))?(?: extractVersion=(?<extractVersion>[^\\s\"]+))?\"[^{}]*?\"default\"\\s*:\\s*\"(?<currentValue>[^\"]+)\"",
-        "\"default\"\\s*:\\s*\"(?<currentValue>[^\"]+)\"[^{}]*?\"description\"\\s*:\\s*\"renovate: datasource=(?<datasource>[a-z-]+) depName=(?<depName>[^\\s\"]+)(?: versioning=(?<versioning>[^\\s\"]+))?(?: extractVersion=(?<extractVersion>[^\\s\"]+))?\""
+        "\"description\"\\s*:\\s*\"renovate: datasource=(?<datasource>[a-z.-]+) depName=(?<depName>[^\\s\"]+)(?: versioning=(?<versioning>[^\\s\"]+))?(?: extractVersion=(?<extractVersion>[^\\s\"]+))?\"[^{}]*?\"default\"\\s*:\\s*\"(?<currentValue>[^\"]+)\"",
+        "\"default\"\\s*:\\s*\"(?<currentValue>[^\"]+)\"[^{}]*?\"description\"\\s*:\\s*\"renovate: datasource=(?<datasource>[a-z.-]+) depName=(?<depName>[^\\s\"]+)(?: versioning=(?<versioning>[^\\s\"]+))?(?: extractVersion=(?<extractVersion>[^\\s\"]+))?\""
       ]
     }
   ],
+  "customDatasources": {
+    "wolfi": {
+      "defaultRegistryUrlTemplate": "https://raw.githubusercontent.com/wolfi-dev/os/main/{{packageName}}.yaml",
+      "format": "yaml",
+      "transformTemplates": [
+        "{\"releases\": [{\"version\": package.version & \"-r\" & $string(package.epoch)}]}"
+      ]
+    }
+  },
   "packageRules": [
     {
       "matchFileNames": ["docker/**/docker-bake.json", "docker/**/Dockerfile"],

@@ -1,0 +1,21 @@
+#!/bin/sh
+# ngatetun falls back to resolvconf when nmcli is absent: it is expected to
+# call `resolvconf -a <interface>.ngate` with resolv.conf lines on stdin and
+# `resolvconf -d <interface>.ngate` on teardown. This stub records the request
+# in /run/ngate-client/dns and logs it to the container output.
+set -eu
+
+state=/run/ngate-client/dns
+log=/proc/1/fd/2
+
+printf 'ngate-client: resolvconf %s\n' "$*" > "$log"
+mkdir -p "${state%/*}"
+case "${1:-}" in
+  -a)
+    cat > "$state"
+    sed 's/^/ngate-client: resolvconf: /' "$state" > "$log"
+    ;;
+  -d)
+    rm -f "$state"
+    ;;
+esac

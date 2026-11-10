@@ -9,9 +9,13 @@ ARG NGATE_REPO_URL=https://ng-client.cryptopro.ru/repository/debian/amd64_snapsh
 # CryptoPro CSP requires an authenticated repository, so the entrypoint
 # installs this pinned version on the first container start.
 ENV CSP_VERSION="${CSP_VERSION}"
+# Qt in the NGate binaries expects a UTF-8 locale.
+ENV LANG=C.UTF-8
 
-# nmcli uses the host NetworkManager through its mounted system D-Bus socket.
-# Prevent package scripts from starting services during build and runtime.
+# nmcli lets NGate use the host NetworkManager through its system D-Bus
+# socket. iptables is used when the container forwards traffic into the
+# tunnel. Prevent package scripts from starting services during build and
+# runtime.
 RUN printf '#!/bin/sh\nexit 101\n' > /usr/sbin/policy-rc.d \
  && chmod 0755 /usr/sbin/policy-rc.d \
  && apt-get update \
@@ -20,6 +24,7 @@ RUN printf '#!/bin/sh\nexit 101\n' > /usr/sbin/policy-rc.d \
       curl \
       expect \
       iproute2 \
+      iptables \
       libdbus-1-3 \
       libglib2.0-0t64 \
       lsb-base \
@@ -51,5 +56,6 @@ RUN set -eu; \
 COPY cryptopro-package-signing-key.asc /usr/share/keyrings/cryptopro.asc
 COPY entrypoint.sh /usr/local/bin/ngate-client-entrypoint
 COPY connect.exp /usr/local/lib/ngate-client/connect.exp
+COPY resolvconf /usr/sbin/resolvconf
 
 ENTRYPOINT ["/usr/bin/tini", "--", "/usr/local/bin/ngate-client-entrypoint"]

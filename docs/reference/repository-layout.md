@@ -15,7 +15,8 @@
 │   │   ├── connect.exp
 │   │   ├── cryptopro-package-signing-key.asc
 │   │   ├── docker-bake.json
-│   │   └── entrypoint.sh
+│   │   ├── entrypoint.sh
+│   │   └── resolvconf
 │   ├── py-astral-stack/
 │   │   ├── Dockerfile
 │   │   └── docker-bake.json

@@ -31,8 +31,9 @@ supports Kubernetes storage initialization workloads and remains running with
 
 ### [ngate-client](reference/ngate-client.md)
 
-Connects a Linux host to a CryptoPro NGate VPN gateway with the vendor console
-client. The NGate client is part of the image, CryptoPro CSP is installed on
+Connects to a CryptoPro NGate VPN gateway with the vendor console client,
+either on a Linux host through NetworkManager or as a gateway for other hosts.
+The NGate client is part of the image, CryptoPro CSP is installed on
 the first container start, and credentials and the CSP license are passed
 at runtime.
 
