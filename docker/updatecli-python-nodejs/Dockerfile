@@ -2,7 +2,7 @@ ARG UPDATECLI_VERSION
 
 FROM ghcr.io/updatecli/updatecli:v${UPDATECLI_VERSION} AS updatecli
 
-FROM docker.io/nikolaik/python-nodejs:python3.14-nodejs26@sha256:51f5bcef7823fcbb6fc542f7dc6eb8ca7747919634a52ff280e651ae47a74550
+FROM docker.io/nikolaik/python-nodejs:python3.14-nodejs26@sha256:0ff4353fdbdae8b86a5ebe044b422064b12073f9a624f646ac3a01eab9457359
 
 ARG PYTHON_VERSION
 ARG NODE_VERSION
