@@ -1,20 +1,22 @@
 # updatecli-python-nodejs
 
-OCI image bundling Updatecli with Python, PyYAML, Node.js, npm, and git. It
-runs Updatecli pipelines whose shell sources and targets need Python scripts,
-`npx`-based generators, or git operations, such as the daggerverse
-`skills-sync` scenario.
+OCI image bundling Updatecli with Python, PyYAML, Node.js, npm, Helm, and git.
+It runs Updatecli pipelines whose shell sources and targets need Python
+scripts, `npx`-based generators, Helm chart operations, or git operations,
+such as the daggerverse `skills-sync` scenario and the `helm-ci` chart sync.
 
 - Location: `docker/updatecli-python-nodejs/`
 - Base image: `docker.io/nikolaik/python-nodejs:python3.14-nodejs26`, pinned by
   digest in the `Dockerfile`
 - Updatecli source: `/usr/local/bin/updatecli` copied from
   `ghcr.io/updatecli/updatecli:v${UPDATECLI_VERSION}`
-- Publish tag: `${REGISTRY}/${REPOSITORY_PREFIX}/updatecli-python-nodejs:py${PYTHON_VERSION}-node${NODE_VERSION}-updatecli${UPDATECLI_VERSION}-pyyaml${PYYAML_VERSION}`
+- Helm source: `/usr/bin/helm` copied from
+  `docker.io/alpine/helm:${HELM_VERSION}` to `/usr/local/bin/helm`
+- Publish tag: `${REGISTRY}/${REPOSITORY_PREFIX}/updatecli-python-nodejs:py${PYTHON_VERSION}-node${NODE_VERSION}-updatecli${UPDATECLI_VERSION}-pyyaml${PYYAML_VERSION}-helm${HELM_VERSION}`
 - Runtime user: `pn` (uid `1000`, gid `1000`), working directory `/home/pn`
 
 With the default values the resolved tag is
-`py3.14-node26-updatecli0.123.0-pyyaml6.0.3`.
+`py3.14-node26-updatecli0.123.0-pyyaml6.0.3-helm4.3.2`.
 
 ## Contents
 
@@ -24,11 +26,13 @@ With the default values the resolved tag is
 | `node` 26, `npm`, `npx`, `yarn` | Base image |
 | `git` and Debian build tooling | Base image (`buildpack-deps`) |
 | `updatecli` | Official Updatecli image |
+| `helm` | `alpine/helm` image, which ships the official Helm release binary |
 | `PyYAML` | Installed with `pip` into the system Python |
 
-The build fails when the base image Python minor version or Node.js major
-version differs from `PYTHON_VERSION` or `NODE_VERSION`, or when `updatecli`,
-`git`, `npx`, or `import yaml` does not work.
+The build fails when the base image Python minor version, the Node.js major
+version, or the Helm version differs from `PYTHON_VERSION`, `NODE_VERSION`, or
+`HELM_VERSION`, or when `updatecli`, `git`, `npx`, or `import yaml` does not
+work.
 
 ## Build arguments
 
@@ -38,6 +42,7 @@ version differs from `PYTHON_VERSION` or `NODE_VERSION`, or when `updatecli`,
 | `NODE_VERSION` | `NODE_VERSION` | `26` | Node.js major version of the base image, used in the tag and checked at build time |
 | `UPDATECLI_VERSION` | `UPDATECLI_VERSION` | `0.123.0` | Updatecli release copied from the official image |
 | `PYYAML_VERSION` | `PYYAML_VERSION` | `6.0.3` | PyYAML version installed with `pip` |
+| `HELM_VERSION` | `HELM_VERSION` | `4.3.2` | Helm release copied from the `alpine/helm` image, checked at build time |
 
 ## Renovate metadata
 
@@ -46,6 +51,7 @@ version differs from `PYTHON_VERSION` or `NODE_VERSION`, or when `updatecli`,
 | Base image digest | `Dockerfile` `FROM` | Built-in `dockerfile` manager | Digest of `nikolaik/python-nodejs:python3.14-nodejs26` |
 | `UPDATECLI_VERSION` | `docker-bake.json` | Bake regex manager | `docker` datasource, `ghcr.io/updatecli/updatecli`, `extractVersion=^v(?<version>[0-9.]+)$` |
 | `PYYAML_VERSION` | `docker-bake.json` | Bake regex manager | `pypi` datasource, `PyYAML` |
+| `HELM_VERSION` | `docker-bake.json` | Bake regex manager | `docker` datasource, `alpine/helm` |
 
 The base tag `python3.14-nodejs26` is rebuilt upstream without changing its
 name, so Renovate proposes digest updates only. Moving to another Python or

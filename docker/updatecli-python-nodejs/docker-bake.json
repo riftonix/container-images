@@ -19,6 +19,10 @@
     "PYYAML_VERSION": {
       "default": "6.0.3",
       "description": "renovate: datasource=pypi depName=PyYAML"
+    },
+    "HELM_VERSION": {
+      "default": "4.3.2",
+      "description": "renovate: datasource=docker depName=alpine/helm"
     }
   },
   "target": {
@@ -29,20 +33,22 @@
         "PYTHON_VERSION": "${PYTHON_VERSION}",
         "NODE_VERSION": "${NODE_VERSION}",
         "UPDATECLI_VERSION": "${UPDATECLI_VERSION}",
-        "PYYAML_VERSION": "${PYYAML_VERSION}"
+        "PYYAML_VERSION": "${PYYAML_VERSION}",
+        "HELM_VERSION": "${HELM_VERSION}"
       },
       "tags": [
-        "${REGISTRY}/${REPOSITORY_PREFIX}/updatecli-python-nodejs:py${PYTHON_VERSION}-node${NODE_VERSION}-updatecli${UPDATECLI_VERSION}-pyyaml${PYYAML_VERSION}"
+        "${REGISTRY}/${REPOSITORY_PREFIX}/updatecli-python-nodejs:py${PYTHON_VERSION}-node${NODE_VERSION}-updatecli${UPDATECLI_VERSION}-pyyaml${PYYAML_VERSION}-helm${HELM_VERSION}"
       ],
       "labels": {
         "org.opencontainers.image.title": "updatecli-python-nodejs",
-        "org.opencontainers.image.version": "py${PYTHON_VERSION}-node${NODE_VERSION}-updatecli${UPDATECLI_VERSION}-pyyaml${PYYAML_VERSION}",
+        "org.opencontainers.image.version": "py${PYTHON_VERSION}-node${NODE_VERSION}-updatecli${UPDATECLI_VERSION}-pyyaml${PYYAML_VERSION}-helm${HELM_VERSION}",
         "org.opencontainers.image.source": "https://github.com/riftonix/container-images",
         "org.opencontainers.image.base.name": "docker.io/nikolaik/python-nodejs:python${PYTHON_VERSION}-nodejs${NODE_VERSION}",
         "io.riftonix.container-images.python.version": "${PYTHON_VERSION}",
         "io.riftonix.container-images.nodejs.version": "${NODE_VERSION}",
         "io.riftonix.container-images.updatecli.version": "${UPDATECLI_VERSION}",
-        "io.riftonix.container-images.pyyaml.version": "${PYYAML_VERSION}"
+        "io.riftonix.container-images.pyyaml.version": "${PYYAML_VERSION}",
+        "io.riftonix.container-images.helm.version": "${HELM_VERSION}"
       },
       "platforms": ["linux/amd64", "linux/arm64"]
     }
