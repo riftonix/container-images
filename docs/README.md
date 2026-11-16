@@ -45,9 +45,9 @@ installing those tools at runtime.
 
 ### [updatecli-python-nodejs](reference/updatecli-python-nodejs.md)
 
-Bundles Updatecli with Python, PyYAML, Node.js, npm, and git. Use it to run
-Updatecli pipelines whose shell resources call Python scripts, `npx`-based
-generators, or git.
+Bundles Updatecli with Python, PyYAML, Node.js, npm, Helm, and git. Use it to
+run Updatecli pipelines whose shell resources call Python scripts, `npx`-based
+generators, Helm, or git.
 
 ## Documentation Structure
 
