@@ -1,5 +1,5 @@
-# Copy this file out of the repository, fill in the environment, put root
-# certificates into ./ca next to it, and run `docker compose up`.
+# Copy this file out of the repository, fill in the environment, and run
+# `docker compose up`.
 name: ngate-client
 
 services:
@@ -19,8 +19,10 @@ services:
         source: /run/dbus/system_bus_socket
         target: /run/dbus/system_bus_socket
         read_only: true
-      - ./ca:/etc/ngate-client/ca.d:ro
     environment:
+      # Root certificate file of the gateway chain as one base64 line, for
+      # example from `base64 -w0 root.cer`.
+      NGATE_ROOT_CERTIFICATES: ""
       # cryptopro.ru account. Needed to download CryptoPro CSP when the container
       # is created; not used for the VPN login.
       CRYPTOPRO_USERNAME: ""

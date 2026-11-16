@@ -6,7 +6,8 @@ host with NetworkManager or acts as a gateway that other hosts route traffic
 through. The NGate client is part of the image. CryptoPro CSP is distributed only through an authenticated
 repository, so the entrypoint installs it on the first container start. On
 every start the entrypoint then applies the CSP license, installs trusted root
-certificates, starts the NGate TUN helper, and logs in to the gateway.
+certificates from `NGATE_ROOT_CERTIFICATES`, starts the NGate TUN helper, and
+logs in to the gateway.
 
 - Location: `docker/ngate-client/`
 - Base image: `docker.io/library/ubuntu:24.04@<digest>`
@@ -31,10 +32,10 @@ names the NGate version inside the image and the CSP version it installs.
 container can install another CSP build by overriding it at runtime.
 
 The image adds `expect`, `tini`, `network-manager` (for `nmcli`), `iproute2`,
-`iptables`, `curl`, `ca-certificates`, `lsb-base`, and the `libglib2.0-0t64`
-and `libdbus-1-3` libraries the NGate binaries link against. It also ships a
-`resolvconf` script that receives the tunnel DNS settings in gateway mode; see
-[Network Modes](#network-modes). `LANG` is set to `C.UTF-8` for the Qt runtime
+`iptables`, `dnsmasq-base`, `curl`, `ca-certificates`, `lsb-base`, and the
+`libglib2.0-0t64` and `libdbus-1-3` libraries the NGate binaries link against.
+It also ships a `resolvconf` script that receives the tunnel DNS settings in
+gateway mode for the DNS forwarder; see [Network Modes](#network-modes). `LANG` is set to `C.UTF-8` for the Qt runtime
 of the NGate binaries. Package service startup is disabled, and no D-Bus or
 NetworkManager runs inside the container. The build fails if `ldd` reports a
 missing library for either NGate binary.
@@ -83,6 +84,7 @@ applying inside the container. Vendor binaries are not modified.
 | `CRYPTOPRO_USERNAME`, `CRYPTOPRO_PASSWORD` | On installation | cryptopro.ru account for the CSP repository |
 | `CSP_LICENSE` | No | CSP license serial number applied on every start |
 | `CSP_REPO_URL`, `CSP_REPO_SUITE` | No | Override the CSP repository location and suite |
+| `NGATE_ROOT_CERTIFICATES` | No | Root certificate file encoded with base64 on one line; see [Root Certificates](#root-certificates) |
 | `NGATE_URL` | Yes | Gateway URL, for example `https://ng-av.crpt.ru` |
 | `NGATE_USERNAME`, `NGATE_PASSWORD` | Yes | Gateway login and password |
 | `NGATE_OTP` | When the gateway asks for it | Answer to the gateway OTP prompt, such as the confirmation method number |
@@ -94,16 +96,6 @@ Without `CSP_LICENSE` the CSP runs on its trial license, which expires 90 days
 after installation. The entrypoint prints only the license kind and validity,
 never the serial number.
 
-Every file in `/etc/ngate-client/ca.d` is installed into the CSP machine root
-store (`mroot`) on every start. The gateway certificate must chain to one of
-these roots. On a host where the desktop client already works, a root can be
-exported by its SHA1 thumbprint:
-
-```bash
-/opt/cprocsp/bin/amd64/certmgr -list -store mroot
-/opt/cprocsp/bin/amd64/certmgr -export -store mroot -thumbprint <sha1> -dest root.cer
-```
-
 Container arguments are passed to `ngateconsoleclient` before the gateway
 URL, for example `-v` for more verbose logs or `--disable-proxy`.
 
@@ -112,6 +104,43 @@ NGate writes its own logs to `/opt/cprongate/ngate_tun_service.log` and
 log shows which integration NGate uses, for example
 `NetworkManager support enabled` or `NetworkManager support disabled by request`.
 
+### Root Certificates
+
+The gateway certificate must chain to a root in the CSP machine root store
+(`mroot`). `NGATE_ROOT_CERTIFICATES` carries these roots as a certificate file
+encoded with base64 on one line, which fits a single text field of a secret
+store. The file can be:
+
+- one certificate, DER or PEM;
+- a chain of CA certificates as a DER PKCS#7 structure.
+
+A file with several PEM certificates is not supported: `certmgr` installs only
+the first of them. Prepare the value with:
+
+```bash
+# one certificate, DER or PEM
+base64 -w0 root.cer
+# a chain of PEM certificates as DER PKCS#7
+openssl crl2pkcs7 -nocrl -certfile root.pem -certfile intermediate.pem -outform DER | base64 -w0
+```
+
+The entrypoint decodes the value before installing CSP, so a value that is not
+base64, such as raw PEM text, stops the container before the download. After
+the license, it installs every certificate of the decoded file with
+`certmgr -install -all -store mroot` on every start and logs the subject and
+SHA1 thumbprint of each one, never the value. A file that `certmgr` cannot
+read stops the container before the login. The decoded file is deleted after
+the installation, and the variable is not passed to `ngateconsoleclient`.
+The image reads no mounted certificate directory.
+
+On a host where the desktop client already works, a root can be exported by
+its SHA1 thumbprint:
+
+```bash
+/opt/cprocsp/bin/amd64/certmgr -list -store mroot
+/opt/cprocsp/bin/amd64/certmgr -export -store mroot -thumbprint <sha1> -dest root.cer
+```
+
 ## Network Modes
 
 `NGATE_MODE` selects how the tunnel reaches the network:
@@ -119,7 +148,7 @@ log shows which integration NGate uses, for example
 | Mode | Container network | Routes | DNS | Host requirements |
 | --- | --- | --- | --- | --- |
 | `networkmanager` | Host | NGate through the host NetworkManager | NGate through the host NetworkManager | NetworkManager, D-Bus socket, `apparmor=unconfined` |
-| `gateway` | Own | NGate with `ip` inside the container | Passed to `resolvconf` and recorded only | `net.ipv4.ip_forward=1`, routes to the container |
+| `gateway` | Own | NGate with `ip` inside the container | Passed to `resolvconf`; served by the DNS forwarder on port 53 | `net.ipv4.ip_forward=1`, routes to the container |
 
 In `networkmanager` mode the entrypoint checks the D-Bus socket and
 NetworkManager before installing CSP. `tun0`, the gateway routes, and the DNS
@@ -129,7 +158,7 @@ stops.
 In `gateway` mode the entrypoint writes `ignoreNetworkManager=1` to
 `/opt/cprongate/service.ini`, so NGate configures `tun0` and the gateway
 routes inside the container with `ip`. Before CSP is installed, the entrypoint
-enables IP forwarding and adds `iptables` rules:
+enables IP forwarding, adds `iptables` rules and starts the DNS forwarder:
 
 - `MASQUERADE` for traffic leaving through `tun0`, so the gateway sees the
   tunnel address;
@@ -144,7 +173,8 @@ The rules use the nf_tables backend when the kernel supports it and
 
 NGate passes the tunnel DNS settings to `resolvconf -a tun0.ngate` and removes
 them with `resolvconf -d tun0.ngate`. The image script logs the settings and
-keeps them in `/run/ngate-client/dns` while the tunnel is up, for example:
+keeps them in `/run/ngate-client/dns` while the tunnel is up; it replaces the
+file in one rename and leaves it empty after `-d`. For example:
 
 ```text
 nameserver 10.77.103.241
@@ -153,8 +183,17 @@ domain crpt.local
 search crpt.local . crpt.tech crpt.ru crptech.ru crpt.cloud crpt.intranet ittds.tech trekmark.ru crpt.team ~
 ```
 
-The routing hosts must send the gateway networks to the container address and
-forward the gateway domains to these DNS servers themselves.
+The DNS forwarder is `dnsmasq`. It answers UDP and TCP queries on port 53 of
+every container address except `tun0` and forwards each query to the
+`nameserver` entries of the file. It rereads the file when NGate changes it,
+so a new session applies without a restart, and it retries the other server
+when one does not answer. Without a session it has no servers and answers
+`REFUSED`. Server changes are logged; queries are not. If port 53 is already
+in use in the container network, the container stops before the login.
+
+The forwarder answers every name it receives. The routing hosts must send the
+gateway networks to the container address and send only queries for the
+gateway domains to the forwarder at the container address.
 
 ## Login Flow
 
@@ -199,7 +238,7 @@ docker run -d --name ngate-client \
   --device /dev/net/tun \
   --security-opt apparmor=unconfined \
   --mount type=bind,src=/run/dbus/system_bus_socket,dst=/run/dbus/system_bus_socket,readonly \
-  -v "$PWD/ca:/etc/ngate-client/ca.d:ro" \
+  -e NGATE_ROOT_CERTIFICATES="$(base64 -w0 root.cer)" \
   -e CRYPTOPRO_USERNAME=<login> \
   -e CRYPTOPRO_PASSWORD=<password> \
   -e CSP_LICENSE=<serial> \
@@ -250,8 +289,8 @@ docker run -d --name ngate-gateway \
   --cap-add NET_ADMIN \
   --device /dev/net/tun \
   --sysctl net.ipv4.ip_forward=1 \
-  -v "$PWD/ca:/etc/ngate-client/ca.d:ro" \
   -e NGATE_MODE=gateway \
+  -e NGATE_ROOT_CERTIFICATES="$(base64 -w0 root.cer)" \
   -e CRYPTOPRO_USERNAME=<login> \
   -e CRYPTOPRO_PASSWORD=<password> \
   -e NGATE_URL=https://ng-av.crpt.ru \
@@ -260,12 +299,15 @@ docker run -d --name ngate-gateway \
   ghcr.io/riftonix/container-images/ngate-client:<version>
 ```
 
-Hosts that use the tunnel route the gateway networks to `172.30.0.2`. The
-routes applied by NGate are visible inside the container:
+Hosts that use the tunnel route the gateway networks to `172.30.0.2` and send
+queries for the gateway domains to the same address. The routes and DNS
+settings applied by NGate are visible inside the container, and the forwarder
+can be queried from the Docker host:
 
 ```bash
 docker exec ngate-gateway ip route show dev tun0
 docker exec ngate-gateway cat /run/ngate-client/dns
+dig @172.30.0.2 <host>.crpt.local
 ```
 
 ## Renovate Metadata

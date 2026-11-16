@@ -1,7 +1,8 @@
 #!/bin/bash
-# Installs CryptoPro CSP on the first start, applies the CSP license and
-# trusted root certificates, starts the NGate TUN helper, and hands the
-# connection over to connect.exp. Arguments are passed to ngateconsoleclient.
+# Installs CryptoPro CSP on the first start, applies the CSP license and the
+# trusted root certificates from NGATE_ROOT_CERTIFICATES, starts the DNS
+# forwarder in gateway mode and the NGate TUN helper, and hands the connection
+# over to connect.exp. Arguments are passed to ngateconsoleclient.
 set -euo pipefail
 
 NGATE_MODE="${NGATE_MODE:-networkmanager}"
@@ -11,7 +12,9 @@ CSP_PACKAGES=(lsb-cprocsp-base lsb-cprocsp-rdr-64 lsb-cprocsp-kc1-64 lsb-cprocsp
 CSP_DEB_DIR=/var/cache/apt/cryptopro
 APT_AUTH_FILE=/etc/apt/auth.conf.d/cryptopro.conf
 APT_SOURCE_FILE=/etc/apt/sources.list.d/cryptopro.list
-CA_DIR=/etc/ngate-client/ca.d
+ROOT_CERTIFICATES_FILE=/run/ngate-client/root-certificates
+# Written by the resolvconf stub and read by the DNS forwarder.
+DNS_SERVERS_FILE=/run/ngate-client/dns
 # CSP tools run through the ELF loader, so host AppArmor profiles attached to
 # their paths are not applied.
 LOADER=/lib64/ld-linux-x86-64.so.2
@@ -77,14 +80,28 @@ apply_license() {
   "$LOADER" "$CPCONFIG" -license -view | grep -E '^(license|License type)' >&2 || true
 }
 
+# NGATE_ROOT_CERTIFICATES holds a certificate file encoded with base64. It is
+# decoded before CSP is downloaded, so a bad value fails early.
+decode_root_certificates() {
+  rm -f "$ROOT_CERTIFICATES_FILE"
+  [ -n "${NGATE_ROOT_CERTIFICATES:-}" ] || return 0
+  mkdir -p "${ROOT_CERTIFICATES_FILE%/*}"
+  if ! (umask 077 && printf '%s' "$NGATE_ROOT_CERTIFICATES" | base64 -d > "$ROOT_CERTIFICATES_FILE") \
+    || [ ! -s "$ROOT_CERTIFICATES_FILE" ]; then
+    rm -f "$ROOT_CERTIFICATES_FILE"
+    die "NGATE_ROOT_CERTIFICATES is not valid base64 or decodes to nothing"
+  fi
+}
+
+# stdin is /dev/null, so a certmgr prompt fails instead of hanging.
 install_root_certificates() {
-  local cert
-  for cert in "$CA_DIR"/*; do
-    [ -f "$cert" ] || continue
-    log "installing root certificate ${cert##*/}"
-    "$LOADER" "$CERTMGR" -install -store mroot -file "$cert" < /dev/null > /dev/null \
-      || die "failed to install root certificate $cert"
-  done
+  [ -f "$ROOT_CERTIFICATES_FILE" ] || return 0
+  log "installing root certificates from NGATE_ROOT_CERTIFICATES"
+  if ! "$LOADER" "$CERTMGR" -install -all -store mroot -file "$ROOT_CERTIFICATES_FILE" < /dev/null >&2; then
+    rm -f "$ROOT_CERTIFICATES_FILE"
+    die "certmgr failed to install the root certificates from NGATE_ROOT_CERTIFICATES"
+  fi
+  rm -f "$ROOT_CERTIFICATES_FILE"
 }
 
 # Lets other hosts route traffic into the tunnel through this container.
@@ -118,10 +135,24 @@ add_rule() {
   "$ipt" -t "$table" -C "$chain" "$@" 2> /dev/null || "$ipt" -t "$table" -A "$chain" "$@"
 }
 
+# Answers DNS on port 53 of the container through the servers of the current
+# NGate session. It starts without servers; the resolvconf stub replaces the
+# file on every session change, and dnsmasq rereads it. dnsmasq stays root
+# because the stub creates the file with mode 0600. Queries are not logged.
+start_dns_forwarder() {
+  mkdir -p "${DNS_SERVERS_FILE%/*}"
+  : > "$DNS_SERVERS_FILE"
+  dnsmasq --resolv-file="$DNS_SERVERS_FILE" --no-hosts --bind-dynamic --except-interface=tun0 \
+    --user=root --log-facility=/proc/1/fd/2 \
+    || die "dnsmasq failed to start the DNS forwarder"
+  log "DNS forwarder listening on port 53"
+}
+
 # networkmanager: the container uses the host network, and ngatetun configures
 # routes and DNS through the host NetworkManager.
 # gateway: the container has its own network, ngatetun configures routes with
-# ip and passes DNS to resolvconf, and other hosts reach the tunnel through NAT.
+# ip and passes DNS to resolvconf, and other hosts reach the tunnel through NAT
+# and resolve its names through the DNS forwarder.
 configure_mode() {
   case "$NGATE_MODE" in
     networkmanager)
@@ -134,6 +165,7 @@ configure_mode() {
     gateway)
       printf 'ignoreNetworkManager=1\n' > "$NGATETUN_CONFIG"
       enable_nat
+      start_dns_forwarder
       ;;
     *)
       die "NGATE_MODE must be networkmanager or gateway"
@@ -159,10 +191,11 @@ for name in NGATE_URL NGATE_USERNAME NGATE_PASSWORD; do
   [ -n "${!name:-}" ] || die "$name is required"
 done
 
+decode_root_certificates
 install_csp
 apply_license
 install_root_certificates
 start_ngatetun
 
-unset CRYPTOPRO_USERNAME CRYPTOPRO_PASSWORD CSP_LICENSE
+unset CRYPTOPRO_USERNAME CRYPTOPRO_PASSWORD CSP_LICENSE NGATE_ROOT_CERTIFICATES
 exec expect -f /usr/local/lib/ngate-client/connect.exp -- "$@"

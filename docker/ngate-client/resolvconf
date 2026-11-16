@@ -1,21 +1,26 @@
 #!/bin/sh
 # ngatetun falls back to resolvconf when nmcli is absent: it is expected to
 # call `resolvconf -a <interface>.ngate` with resolv.conf lines on stdin and
-# `resolvconf -d <interface>.ngate` on teardown. This stub records the request
-# in /run/ngate-client/dns and logs it to the container output.
+# `resolvconf -d <interface>.ngate` on teardown. This stub replaces
+# /run/ngate-client/dns with the stdin lines on -a and with an empty file on
+# -d, and logs the request to the container output. The new content is written
+# to a temporary file and renamed, so the DNS forwarder never reads a partly
+# written file.
 set -eu
 
 state=/run/ngate-client/dns
 log=/proc/1/fd/2
 
-printf 'ngate-client: resolvconf %s\n' "$*" > "$log"
+printf 'ngate-client: resolvconf %s\n' "$*" >> "$log"
 mkdir -p "${state%/*}"
 case "${1:-}" in
-  -a)
-    cat > "$state"
-    sed 's/^/ngate-client: resolvconf: /' "$state" > "$log"
-    ;;
-  -d)
-    rm -f "$state"
+  -a | -d)
+    tmp="$(mktemp "$state.XXXXXX")"
+    trap 'rm -f "$tmp"' EXIT
+    if [ "$1" = -a ]; then
+      cat > "$tmp"
+      sed 's/^/ngate-client: resolvconf: /' "$tmp" >> "$log"
+    fi
+    mv -f "$tmp" "$state"
     ;;
 esac

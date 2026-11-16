@@ -14,7 +14,8 @@ ENV LANG=C.UTF-8
 
 # nmcli lets NGate use the host NetworkManager through its system D-Bus
 # socket. iptables is used when the container forwards traffic into the
-# tunnel. Prevent package scripts from starting services during build and
+# tunnel, and dnsmasq-base provides the DNS forwarder for that mode without a
+# service. Prevent package scripts from starting services during build and
 # runtime.
 RUN printf '#!/bin/sh\nexit 101\n' > /usr/sbin/policy-rc.d \
  && chmod 0755 /usr/sbin/policy-rc.d \
@@ -22,6 +23,7 @@ RUN printf '#!/bin/sh\nexit 101\n' > /usr/sbin/policy-rc.d \
  && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
       ca-certificates \
       curl \
+      dnsmasq-base \
       expect \
       iproute2 \
       iptables \
