@@ -18,7 +18,11 @@ foreach name {NGATE_URL NGATE_USERNAME NGATE_PASSWORD NGATE_OTP} {
 }
 
 set client_pid 0
+# A prompt more than this many seconds after the previous prompt of its kind
+# counts as the first one again.
+set window 300
 array set tries {password 0 otp 0}
+array set last {password 0 otp 0}
 
 proc fail {message} {
     global client_pid
@@ -29,13 +33,25 @@ proc fail {message} {
     exit 1
 }
 
+# The client may turn the pty echo back on after it has read an answer, so
+# disable it again right before every answer.
+proc send_secret {value} {
+    global spawn_out
+    stty -echo < $spawn_out(slave,name)
+    send -- "$value\r"
+}
+
 # Wrong credentials must not be retried until the account is locked.
 proc answer {kind value} {
-    global tries
-    if {[incr tries($kind)] > 3} {
-        fail "$kind was requested 3 times in a row, giving up"
+    global tries last window
+    set now [clock seconds]
+    if {$now - $last($kind) > $window} {
+        set tries($kind) 1
+    } elseif {[incr tries($kind)] > 3} {
+        fail "$kind was requested 4 times within $window seconds, giving up"
     }
-    send -- "$value\r"
+    set last($kind) $now
+    send_secret $value
 }
 
 spawn -noecho /opt/cprongate/ngateconsoleclient -K -v {*}$argv $url
@@ -49,7 +65,7 @@ trap {
 
 expect {
     -re {Please enter username for authentication:} {
-        send -- "$username\r"
+        send_secret $username
         exp_continue
     }
     -re {Please enter password for authentication:} {
@@ -68,10 +84,6 @@ expect {
     }
     -re {Please enter 'Yes'[^:]*:} {
         send -- "\r"
-        exp_continue
-    }
-    -re {VPN session online} {
-        array set tries {password 0 otp 0}
         exp_continue
     }
     eof

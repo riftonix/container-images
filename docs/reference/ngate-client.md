@@ -12,7 +12,7 @@ logs in to the gateway.
 - Location: `docker/ngate-client/`
 - Base image: `docker.io/library/ubuntu:26.04@<digest>`
 - Publish tag: `${REGISTRY}/${REPOSITORY_PREFIX}/ngate-client:${NGATE_VERSION}-csp${CSP_VERSION}`
-- Entrypoint: `tini -- ngate-client-entrypoint`
+- Entrypoint: `ngate-client-entrypoint`
 - Platforms: `linux/amd64`
 
 For example, `NGATE_VERSION=1.0.30-215-g7d7fc57` and `CSP_VERSION=5.0.13000-7`
@@ -31,7 +31,7 @@ names the NGate version inside the image and the CSP version it installs.
 `CSP_VERSION` also becomes an environment variable of the same name, so a
 container can install another CSP build by overriding it at runtime.
 
-The image adds `expect`, `tini`, `network-manager` (for `nmcli`), `iproute2`,
+The image adds `expect`, `network-manager` (for `nmcli`), `iproute2`,
 `iptables`, `dnsmasq-base`, `curl`, `ca-certificates`, `lsb-base`, and the
 `libglib2.0-0t64` and `libdbus-1-3` libraries the NGate binaries link against.
 It also ships a `resolvconf` script that receives the tunnel DNS settings in
@@ -201,21 +201,28 @@ The entrypoint runs `ngateconsoleclient -K -v <arguments> <NGATE_URL>` under
 `expect`, which answers the client prompts:
 
 1. The username and password prompts receive `NGATE_USERNAME` and
-   `NGATE_PASSWORD`. Pty echo is disabled, so the values do not appear in the
-   container log.
+   `NGATE_PASSWORD`. Pty echo is disabled before every answer, so the values
+   do not appear in the container log, also on repeated prompts.
 2. When the gateway asks for an OTP, the prompt receives `NGATE_OTP`. If the
    account has several confirmation methods, the gateway asks for the method
    number. With a single method it sends the push without a prompt, and
    `NGATE_OTP` can be omitted. The login completes after the push is approved
    on the device.
-3. After `VPN session online` the attempt counters reset. The password and
-   OTP prompts are each answered at most three times in a row before the
-   container exits.
+3. The password and OTP prompts are each answered at most three times within
+   300 seconds. A fourth prompt of the same kind within 300 seconds of the
+   previous one is not answered, and the container exits with an error. A
+   prompt more than 300 seconds after the previous one of its kind, such as a
+   `-K` reconnect, counts as the first one again.
 
 The `-K` flag starts a new session when the gateway session expires, which
 repeats the login and the OTP confirmation. The container exits with an error
 when the gateway requests an OTP without `NGATE_OTP` set, a password change,
 an OTP PIN, or certificate authentication.
+
+The entrypoint stays the first process of the container and handles SIGTERM
+and SIGINT. On either signal it passes SIGTERM to the client, waits until the
+client has ended its session and exited, and exits with the client status, so
+`docker stop` or a RouterOS container stop does not need to kill it.
 
 When the client exits, the container exits with the client status. A restart
 policy such as `--restart unless-stopped` reconnects automatically, and each

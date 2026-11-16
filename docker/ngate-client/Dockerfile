@@ -31,7 +31,6 @@ RUN printf '#!/bin/sh\nexit 101\n' > /usr/sbin/policy-rc.d \
       libglib2.0-0t64 \
       lsb-base \
       network-manager \
-      tini \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 
@@ -60,4 +59,4 @@ COPY entrypoint.sh /usr/local/bin/ngate-client-entrypoint
 COPY connect.exp /usr/local/lib/ngate-client/connect.exp
 COPY resolvconf /usr/sbin/resolvconf
 
-ENTRYPOINT ["/usr/bin/tini", "--", "/usr/local/bin/ngate-client-entrypoint"]
+ENTRYPOINT ["/usr/local/bin/ngate-client-entrypoint"]
