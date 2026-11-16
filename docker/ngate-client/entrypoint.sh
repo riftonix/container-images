@@ -1,8 +1,9 @@
 #!/bin/bash
 # Installs CryptoPro CSP on the first start, applies the CSP license and the
 # trusted root certificates from NGATE_ROOT_CERTIFICATES, starts the DNS
-# forwarder in gateway mode and the NGate TUN helper, and hands the connection
-# over to connect.exp. Arguments are passed to ngateconsoleclient.
+# forwarder in gateway mode and the NGate TUN helper, and runs connect.exp for
+# the connection. It stays PID 1, passes stop signals on and exits with the
+# client status. Arguments are passed to ngateconsoleclient.
 set -euo pipefail
 
 NGATE_MODE="${NGATE_MODE:-networkmanager}"
@@ -198,4 +199,17 @@ install_root_certificates
 start_ngatetun
 
 unset CRYPTOPRO_USERNAME CRYPTOPRO_PASSWORD CSP_LICENSE NGATE_ROOT_CERTIFICATES
-exec expect -f /usr/local/lib/ngate-client/connect.exp -- "$@"
+expect -f /usr/local/lib/ngate-client/connect.exp -- "$@" &
+client_pid=$!
+
+# The entrypoint stays PID 1 with real signal handlers: RouterOS kills a
+# container at once when its first process catches no stop signal.
+# connect.exp passes TERM on to the client, and an interrupted wait is
+# repeated until connect.exp has exited.
+trap 'kill -TERM "$client_pid" 2> /dev/null || true' TERM INT
+while :; do
+  status=0
+  wait "$client_pid" || status=$?
+  kill -0 "$client_pid" 2> /dev/null || break
+done
+exit "$status"
