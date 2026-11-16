@@ -11,7 +11,7 @@ command. The file runs the published
    credentials are never committed:
 
    ```bash
-   mkdir -p ~/ngate-client/ca
+   mkdir -p ~/ngate-client
    cp docs/how-to/ngate-client/docker-compose.yaml ~/ngate-client/
    ```
 
@@ -20,7 +20,10 @@ command. The file runs the published
    start. Leave `NGATE_OTP` empty unless the gateway asks to choose a
    confirmation method.
 
-3. Put the root certificates of the gateway chain into `~/ngate-client/ca`.
+3. Put the root certificate of the gateway chain into `NGATE_ROOT_CERTIFICATES`
+   as one base64 line, for example the output of `base64 -w0 root.cer`. A chain
+   of several CA certificates is passed as DER PKCS#7; see
+   [Root Certificates](../reference/ngate-client.md#root-certificates).
 
 4. Start the connection and approve the push on the device:
 
