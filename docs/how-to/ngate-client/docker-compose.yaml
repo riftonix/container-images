@@ -4,7 +4,7 @@ name: ngate-client
 
 services:
   ngate-client:
-    image: ghcr.io/riftonix/container-images/ngate-client:1.0.30-213-g9526b28-csp5.0.13000-7
+    image: ghcr.io/riftonix/container-images/ngate-client:1.0.30-215-g7d7fc57-csp5.0.13000-7
     container_name: ngate-client
     restart: "no"
     network_mode: host
