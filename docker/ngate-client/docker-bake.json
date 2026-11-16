@@ -11,15 +11,15 @@
       "description": "CryptoPro CSP package version installed at container start from the authenticated cryptopro.ru repository"
     },
     "NGATE_VERSION": {
-      "default": "1.0.30-213-g9526b28",
+      "default": "1.0.30-215-g7d7fc57",
       "description": "CryptoPro NGate cprongate-tun and cprongate-console package version extracted into the image at build time"
     },
     "NGATE_TUN_SHA256": {
-      "default": "097aeb72975ed70cbe7821fc2b46f885ec8ea6996497f8b519dcd436e164b9f0",
+      "default": "196fe88cfecba0f130add520247bc96a1ac2740195600e4342e0bff1ca9d8e86",
       "description": "SHA256 of the cprongate-tun amd64 package for NGATE_VERSION"
     },
     "NGATE_CONSOLE_SHA256": {
-      "default": "a96836a41c1b9cff6af48efd57ac28ecf0a4c3525954d394bcb8012a488fd21c",
+      "default": "ae4b53902903d5604685258defb073363f63b631d8020e0c3090bd150f646497",
       "description": "SHA256 of the cprongate-console amd64 package for NGATE_VERSION"
     }
   },

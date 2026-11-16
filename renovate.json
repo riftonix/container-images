@@ -62,6 +62,11 @@
       "labels": ["image-dependencies"]
     },
     {
+      "description": "Review major updates before merging",
+      "matchUpdateTypes": ["major"],
+      "automerge": false
+    },
+    {
       "description": "Order ngate-client tags by NGate version and then by CSP build",
       "matchManagers": ["docker-compose"],
       "matchDepNames": ["ghcr.io/riftonix/container-images/ngate-client"],

@@ -1,0 +1,28 @@
+{
+  "variable": {
+    "REGISTRY": { "default": "ghcr.io" },
+    "REPOSITORY_PREFIX": { "default": "riftonix/container-images" },
+    "OPENCODE_VERSION": {
+      "default": "2.3.0",
+      "description": "renovate: datasource=docker depName=ghcr.io/anomalyco/opencode versioning=semver"
+    }
+  },
+  "target": {
+    "opencode": {
+      "context": "docker/opencode",
+      "dockerfile": "Dockerfile",
+      "args": {
+        "OPENCODE_VERSION": "${OPENCODE_VERSION}"
+      },
+      "tags": ["${REGISTRY}/${REPOSITORY_PREFIX}/opencode:${OPENCODE_VERSION}"],
+      "labels": {
+        "org.opencontainers.image.title": "opencode",
+        "org.opencontainers.image.description": "OpenCode v2 agent with shell, Python, Node.js and kubectl tooling",
+        "org.opencontainers.image.version": "${OPENCODE_VERSION}",
+        "org.opencontainers.image.source": "https://github.com/riftonix/container-images",
+        "org.opencontainers.image.base.name": "ghcr.io/anomalyco/opencode:${OPENCODE_VERSION}"
+      },
+      "platforms": ["linux/amd64", "linux/arm64"]
+    }
+  }
+}

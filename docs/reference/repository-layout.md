@@ -17,6 +17,10 @@
 │   │   ├── docker-bake.json
 │   │   ├── entrypoint.sh
 │   │   └── resolvconf
+│   ├── opencode/
+│   │   ├── Dockerfile
+│   │   ├── docker-bake.json
+│   │   └── smoke-test.sh
 │   ├── py-astral-stack/
 │   │   ├── Dockerfile
 │   │   └── docker-bake.json
