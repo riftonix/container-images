@@ -40,7 +40,7 @@
         "org.opencontainers.image.title": "ngate-client",
         "org.opencontainers.image.version": "${NGATE_VERSION}-csp${CSP_VERSION}",
         "org.opencontainers.image.source": "https://github.com/riftonix/container-images",
-        "org.opencontainers.image.base.name": "docker.io/library/ubuntu:24.04",
+        "org.opencontainers.image.base.name": "docker.io/library/ubuntu:26.04",
         "io.riftonix.container-images.ngate.version": "${NGATE_VERSION}",
         "io.riftonix.container-images.csp.version": "${CSP_VERSION}"
       },

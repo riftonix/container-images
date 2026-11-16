@@ -10,13 +10,13 @@ certificates from `NGATE_ROOT_CERTIFICATES`, starts the NGate TUN helper, and
 logs in to the gateway.
 
 - Location: `docker/ngate-client/`
-- Base image: `docker.io/library/ubuntu:24.04@<digest>`
+- Base image: `docker.io/library/ubuntu:26.04@<digest>`
 - Publish tag: `${REGISTRY}/${REPOSITORY_PREFIX}/ngate-client:${NGATE_VERSION}-csp${CSP_VERSION}`
 - Entrypoint: `tini -- ngate-client-entrypoint`
 - Platforms: `linux/amd64`
 
-For example, `NGATE_VERSION=1.0.30-213-g9526b28` and `CSP_VERSION=5.0.13000-7`
-produce an image tag ending in `:1.0.30-213-g9526b28-csp5.0.13000-7`. The tag
+For example, `NGATE_VERSION=1.0.30-215-g7d7fc57` and `CSP_VERSION=5.0.13000-7`
+produce an image tag ending in `:1.0.30-215-g7d7fc57-csp5.0.13000-7`. The tag
 names the NGate version inside the image and the CSP version it installs.
 
 ## Build Arguments
