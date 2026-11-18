@@ -1,4 +1,4 @@
-FROM docker.io/chainguard/wolfi-base:latest@sha256:e9b8c3739e5fb5fc778843a2ce74f8620588c9ddc9c44918cead527abcb0b628
+FROM docker.io/chainguard/wolfi-base:latest@sha256:580c9ae79c0229cc381475fbfbed0d91fab5d6606e57cd78732f9836de109e90
 
 ARG LVM_PACKAGE_VERSION
 
