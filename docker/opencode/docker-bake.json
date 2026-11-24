@@ -3,7 +3,7 @@
     "REGISTRY": { "default": "ghcr.io" },
     "REPOSITORY_PREFIX": { "default": "riftonix/container-images" },
     "OPENCODE_VERSION": {
-      "default": "2.4.0",
+      "default": "2.4.1",
       "description": "renovate: datasource=docker depName=ghcr.io/anomalyco/opencode versioning=semver"
     }
   },
